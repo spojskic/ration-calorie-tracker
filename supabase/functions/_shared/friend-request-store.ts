@@ -38,7 +38,10 @@ export function makeFriendRequestStore(admin: SupabaseLike): FriendRequestStore 
         p_email: email,
       });
       if (res.error) return classifyFriendRequestError(res.error);
-      const row = res.data;
+      // send_friend_request_internal is declared `returns table (status, created)` — a SETOF function — so PostgREST
+      // answers with a JSON ARRAY of rows (in production 2026-11-14 the array was misread as one object, the shape
+      // check threw after the request row existed and the mail never went out). A bare object is accepted too.
+      const row = Array.isArray(res.data) ? (res.data[0] ?? null) : res.data;
       if (
         row === null || typeof row !== 'object' ||
         typeof (row as Record<string, unknown>).status !== 'string' ||
