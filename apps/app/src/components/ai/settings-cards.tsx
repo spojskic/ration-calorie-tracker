@@ -93,6 +93,16 @@ export function ConnectionStatusCard() {
 
   const limit = keyInfo?.limit ?? null;
   const remaining = keyInfo?.limitRemaining ?? null;
+  // The account-wide balance (GET /credits) when the key may read it; otherwise the /key numbers are THIS key's
+  // own usage and spending limit — never the account balance — and the labels say so.
+  const account = keyInfo?.account ?? null;
+  const spentLabel = account ? 'Spent so far' : 'Spent with this key';
+  const spentValue = account ? account.totalUsage : keyInfo?.usage ?? 0;
+  const creditLeft = account
+    ? `${formatUsd(account.totalCredits - account.totalUsage)} of ${formatUsd(account.totalCredits)}`
+    : remaining !== null
+      ? `${formatUsd(remaining)}${limit !== null ? ` of ${formatUsd(limit)}` : ''}`
+      : 'No spending limit';
 
   return (
     <Card>
@@ -115,15 +125,18 @@ export function ConnectionStatusCard() {
       ) : keyStatus === 'valid' && keyInfo ? (
         <View style={styles.facts}>
           {keyInfo.label ? <Fact label="Key" value={keyInfo.label} /> : null}
-          <Fact label="Spent so far" value={formatUsd(keyInfo.usage)} />
-          <Fact
-            label="Credit left"
-            value={remaining !== null ? `${formatUsd(remaining)}${limit !== null ? ` of ${formatUsd(limit)}` : ''}` : 'No spending limit'}
-          />
+          <Fact label={spentLabel} value={formatUsd(spentValue)} />
+          <Fact label="Credit left" value={creditLeft} />
           {keyInfo.isFreeTier ? <Pill label="Free tier" /> : null}
-          {limit === null ? (
+          {account === null && limit !== null ? (
+            <Notice tone="info">
+              These are this key&apos;s own numbers. Your account-wide balance is at openrouter.ai/credits.
+            </Notice>
+          ) : null}
+          {account === null && limit === null ? (
             <Notice tone="warning">
-              This key has no spending limit. In your OpenRouter settings you can set one so usage can never run away.
+              This key has no spending limit. In your OpenRouter settings you can set one so usage can never run away,
+              and your account-wide balance is at openrouter.ai/credits.
             </Notice>
           ) : null}
         </View>

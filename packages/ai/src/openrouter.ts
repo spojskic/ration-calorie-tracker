@@ -23,6 +23,7 @@ import { imageInputToPart } from './image';
 import { parseJsonLoose, stripNulls, summarizeIssues, toStrictJsonSchema } from './json-schema';
 import { createSseParser, type SseEvent } from './sse';
 import type {
+  AccountCredits,
   ChatContentPart,
   ChatMessage,
   ChatUsage,
@@ -333,6 +334,21 @@ export function normalizeKeyInfo(raw: unknown): KeyInfo {
         }
       : null,
   };
+}
+
+/**
+ * Account-wide totals of GET /credits: `{ data: { total_credits, total_usage } }`. Throws on any other shape —
+ * callers treat a failed credits call as "unknown", never as a broken key.
+ */
+export function normalizeAccountCredits(raw: unknown): AccountCredits {
+  const root = asRecord(raw);
+  const d = asRecord(root?.data);
+  const totalCredits = asNumber(d?.total_credits);
+  const totalUsage = asNumber(d?.total_usage);
+  if (totalCredits === undefined || totalUsage === undefined) {
+    throw new OpenRouterError({ kind: 'provider', message: 'Unexpected /credits response shape' });
+  }
+  return { totalCredits, totalUsage };
 }
 
 // ---------------------------------------------------------------------------
@@ -737,9 +753,24 @@ export function createOpenRouterClient(options: OpenRouterClientOptions): OpenRo
     }
   }
 
+  /** GET /credits: account-wide totals. Null whenever the key may not read them (a regular inference key gets 403) or the call fails for any reason — supplementary information that must never break the key info. */
+  async function getAccountCredits(opts?: { signal?: AbortSignal }): Promise<AccountCredits | null> {
+    try {
+      const json = await requestJson({ method: 'GET', path: '/credits', auth: true, signal: opts?.signal });
+      return normalizeAccountCredits(json);
+    } catch {
+      return null;
+    }
+  }
+
   async function getKeyInfo(opts?: { signal?: AbortSignal }): Promise<KeyInfo> {
-    const json = await requestJson({ method: 'GET', path: '/key', auth: true, signal: opts?.signal });
-    return normalizeKeyInfo(json);
+    // In parallel: /key (the key's own usage and spending limit) and /credits (the account's balance, when the key
+    // may read it). A 401 on /key stays the validation failure; the credits call only ever adds.
+    const [info, account] = await Promise.all([
+      requestJson({ method: 'GET', path: '/key', auth: true, signal: opts?.signal }).then(normalizeKeyInfo),
+      getAccountCredits(opts),
+    ]);
+    return account ? { ...info, account } : info;
   }
 
   async function listModels(opts: ListModelsOptions = {}): Promise<ModelInfo[]> {

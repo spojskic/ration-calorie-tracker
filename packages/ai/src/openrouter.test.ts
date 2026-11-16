@@ -500,6 +500,53 @@ describe('getKeyInfo', () => {
   });
 });
 
+describe('getKeyInfo account credits', () => {
+  // The key's own numbers (GET /key) are key-scoped: `usage` is what THIS key spent and `limit` is the key's spending
+  // limit — NOT the account balance (production 2026-11-16: the app showed "$49.96 of $50.00" while the account had
+  // $4.96 left, because the $45.04 was spent outside this key). The account-wide numbers live behind GET /credits,
+  // which regular inference keys may not read (403) — a management key can.
+  const keyPayload = {
+    data: {
+      label: 'sk-or-v1-2a0...0f5',
+      limit: 50,
+      limit_remaining: 49.96,
+      limit_reset: null,
+      usage: 0.04,
+      usage_daily: 0.04,
+      usage_monthly: 0.04,
+      is_free_tier: false,
+      is_management_key: false,
+      expires_at: null,
+    },
+  };
+  const byUrl = (credits: Response, key: Response = jsonResponse({ data: keyPayload.data })) =>
+    mockFetch((call) => (call.url.endsWith('/credits') ? credits : key));
+
+  it('a key that may read /credits gets the account-wide totals attached', async () => {
+    const m = byUrl(jsonResponse({ data: { total_credits: 50, total_usage: 45.04 } }));
+    const info = await client(m.fetch).getKeyInfo();
+    expect(m.calls.filter((c) => c.url.endsWith('/credits'))).toHaveLength(1);
+    expect(info.account).toEqual({ totalCredits: 50, totalUsage: 45.04 });
+    expect(info.usage).toBe(0.04);
+  });
+
+  it('a regular key (403 on /credits) keeps the key-scoped info with no account', async () => {
+    const m = byUrl(
+      jsonResponse({ error: { code: 403, message: 'Only management keys can perform this operation' } }, 403),
+    );
+    const info = await client(m.fetch).getKeyInfo();
+    expect(info.account ?? null).toBeNull();
+    expect(info.limitRemaining).toBe(49.96);
+  });
+
+  it('a broken /credits call never breaks the key info', async () => {
+    const m = byUrl(jsonResponse({ broken: true }, 500));
+    const info = await client(m.fetch).getKeyInfo();
+    expect(info.account ?? null).toBeNull();
+    expect(info.usage).toBe(0.04);
+  });
+});
+
 describe('listModels', () => {
   const raw = [
     {

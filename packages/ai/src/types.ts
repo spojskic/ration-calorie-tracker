@@ -65,4 +65,15 @@ export interface KeyInfo {
   isManagementKey: boolean;
   expiresAt: string | null;
   freeModelDailyRequests: { limit: number | null; remaining: number | null; used: number | null } | null;
+  /**
+   * Account-wide credit totals (GET /credits), when the key may read them. Absent for a regular inference
+   * key (OpenRouter answers 403): then `usage`/`limit` above are THIS KEY's numbers only, not the balance.
+   */
+  account?: AccountCredits | null;
+}
+
+/** `GET /credits` (management key): total credits ever purchased and ever used across the account, USD. */
+export interface AccountCredits {
+  totalCredits: number;
+  totalUsage: number;
 }
