@@ -40,6 +40,7 @@ import {
   type BarRow,
   type BarTone,
 } from './desktop-layout';
+import { pressedDip } from './press';
 
 /** Panels, strips and the page header are drawn with a 1 px border. */
 const BORDER = 1;
@@ -197,7 +198,7 @@ export function Panel({
           accessibilityLabel={action.accessibilityLabel ?? action.label}
           hitSlop={6}
           onPress={action.onPress}
-          style={({ pressed }) => [styles.panelAction, pressed && { opacity: 0.6 }]}>
+          style={({ pressed }) => [styles.panelAction, pressedDip(pressed)]}>
           <Text numberOfLines={1} style={[styles.panelActionText, { color: colors.primary }]}>
             {action.label}
           </Text>
@@ -311,7 +312,7 @@ export function ToolbarButton({
           backgroundColor: primary ? colors.primary : pressed ? colors.surfaceAlt : colors.surface,
           borderColor: primary ? colors.primary : colors.border,
           borderRadius: radius.md,
-          opacity: primary && pressed ? 0.85 : 1,
+          opacity: primary ? pressedDip(pressed).opacity : 1,
         },
       ]}>
       {symbol ? <SymbolView name={symbol} size={14} tintColor={primary ? colors.onPrimary : colors.primary} /> : null}

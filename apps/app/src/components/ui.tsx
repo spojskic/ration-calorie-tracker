@@ -1,11 +1,15 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  type RefreshControlProps,
   type StyleProp,
   type TextProps,
   type TextStyle,
@@ -14,6 +18,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MAX_CONTENT_WIDTH, spacing, useTheme } from '@/theme';
+
+import { pressedDip } from './press';
 
 type TextVariant = 'title' | 'heading' | 'body' | 'small' | 'label';
 
@@ -95,6 +101,10 @@ export function Screen({
   );
 }
 
+const PRESS_IN_MS = 120;
+const PRESS_OUT_MS = 160;
+const SPINNER_FADE_MS = 150;
+
 export function Button({
   label,
   onPress,
@@ -112,21 +122,74 @@ export function Button({
   const bg =
     variant === 'primary' ? colors.primary : variant === 'secondary' ? colors.surfaceAlt : 'transparent';
   const fg = variant === 'primary' ? colors.onPrimary : colors.text;
+
+  // The scale is animated (the UI "hears" the tap); the opacity dip is instant, like every other tappable.
+  const [scale] = useState(() => new Animated.Value(1));
+  // The label ↔ spinner swap crossfades in, but resets instantly on stop: returning to the label must not
+  // lag behind the (already finished) action.
+  const [fade] = useState(() => new Animated.Value(loading ? 1 : 0));
+  useEffect(() => {
+    if (loading) {
+      Animated.timing(fade, {
+        toValue: 1,
+        duration: SPINNER_FADE_MS,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    } else {
+      fade.setValue(0);
+    }
+  }, [loading, fade]);
+
+  const pressIn = () => {
+    Animated.timing(scale, {
+      toValue: 0.97,
+      duration: PRESS_IN_MS,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  };
+  const pressOut = () => {
+    Animated.timing(scale, {
+      toValue: 1,
+      duration: PRESS_OUT_MS,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
+      onPressIn={pressIn}
+      onPressOut={pressOut}
       disabled={disabled || loading}
-      style={({ pressed }) => [
-        styles.button,
-        // Half of minHeight: a pill for one line, and a rounded rectangle (not an oval) when a long label wraps onto two.
-        { backgroundColor: bg, borderRadius: shape.circle(BUTTON_MIN_HEIGHT), opacity: disabled ? 0.5 : pressed ? 0.85 : 1 },
-      ]}>
-      {loading ? (
-        <ActivityIndicator color={fg} />
-      ) : (
-        <Text style={[styles.buttonLabel, { color: fg }]}>{label}</Text>
-      )}
+      style={({ pressed }) => [styles.button, disabled ? { opacity: 0.5 } : pressedDip(pressed)]}>
+      <Animated.View
+        style={[
+          styles.buttonSurface,
+          {
+            backgroundColor: bg,
+            // Half of minHeight: a pill for one line, and a rounded rectangle (not an oval) when a long label wraps onto two.
+            borderRadius: shape.circle(BUTTON_MIN_HEIGHT),
+            transform: [{ scale }],
+          },
+        ]}>
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.buttonSlot, { opacity: fade, display: loading ? 'flex' : 'none' }]}>
+          <ActivityIndicator color={fg} />
+        </Animated.View>
+        <Animated.Text
+          style={[
+            styles.buttonLabel,
+            styles.buttonSlot,
+            { color: fg, opacity: fade.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) },
+          ]}>
+          {label}
+        </Animated.Text>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -151,11 +214,28 @@ const styles = StyleSheet.create({
   },
   button: {
     minHeight: BUTTON_MIN_HEIGHT,
+  },
+  // The animated surface fills the (min-height) button; the label and spinner share one centred slot so the
+  // crossfade between them never changes the button's height.
+  buttonSurface: {
+    flex: 1,
+    alignSelf: 'stretch',
+    minHeight: BUTTON_MIN_HEIGHT,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  buttonSlot: { position: 'absolute', width: '100%', alignItems: 'center' },
   // Centred, so a label that has to wrap (two buttons sharing a row) still sits in the middle of its pill.
   buttonLabel: { fontSize: 15, fontWeight: '700', textAlign: 'center' },
 });
+
+/**
+ * The app's RefreshControl: one place for the platform details (Android needs a coloured spinner track,
+ * iOS just a tint) so the six pull-to-refresh screens stay consistent by construction.
+ */
+export function AppRefreshControl(props: RefreshControlProps): ReactNode {
+  const { colors } = useTheme();
+  return <RefreshControl {...props} tintColor={colors.primary} progressBackgroundColor={colors.surface} />;
+}
