@@ -261,8 +261,10 @@ async function checkDesktopFoods(page: Page, ctx: ScenarioContext): Promise<void
 
 // ------------------------------------------------------------------------------------------ energy summary helpers
 
-/** The button under the energy summary's third circle (Remaining / Over in Target, Deficit / Surplus in Balance). */
-const thirdCircleButton = (page: Page) => page.getByRole('button', { name: 'Switch between Target and Balance', exact: true }).first();
+/** The button under the energy summary's third circle (Remaining / Over in Target, Deficit / Surplus in Balance).
+ *  On the phone diary two of them exist (the pager's Energy page, then the sheet's copy above it in DOM order);
+ *  the sheet's is the interactive one, and on desktop the only one, so `.last()` serves both. */
+const thirdCircleButton = (page: Page) => page.getByRole('button', { name: 'Switch between Target and Balance', exact: true }).last();
 
 /** FAIL unless the label under the third circle reads like the pattern (it re-renders a moment after a tap). */
 async function expectThirdCircle(ctx: ScenarioContext, page: Page, pattern: RegExp): Promise<boolean> {

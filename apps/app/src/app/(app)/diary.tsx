@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -26,8 +25,8 @@ import { NutrientTargetsPanel } from '@/components/diary/NutrientTargetsPanel';
 import { NutritionSummarySheet } from '@/components/diary/NutritionSummarySheet';
 import { ActionMenu, Sheet, type MenuAction } from '@/components/diary/Sheet';
 import { energySummaryProps } from '@/components/diary/energy-view';
-import { buildMacroRows, consumedSplit, targetSplit } from '@/components/diary/targets-view';
-import { MacroBars } from '@/components/diary/MacroBars';
+import { buildHighlights, buildMacroRows, consumedSplit, targetSplit } from '@/components/diary/targets-view';
+import { TargetsHeader, TargetsPager } from '@/components/diary/TargetsPager';
 import { ToastHost } from '@/components/diary/ToastHost';
 import { useCopyActions } from '@/components/diary/use-copy-actions';
 import { DEFAULT_WATER_TARGET_ML, QUICK_WATER_ML, WaterRow } from '@/components/diary/WaterRow';
@@ -132,6 +131,10 @@ export default function DiaryScreen() {
         budgetExtraKcal: energy.exerciseBurnedKcal,
       }),
     [colors, day.totals, day.hasEntries, targets, netCarbs, energy.exerciseBurnedKcal],
+  );
+  const highlights = useMemo(
+    () => buildHighlights({ colors, totals: day.totals, hasEntries: day.hasEntries, targets, netCarbs }),
+    [colors, day.totals, day.hasEntries, targets, netCarbs],
   );
   const energyProps: EnergySummaryProps = {
     ...energySummaryProps(energy, summary.toggle),
@@ -380,27 +383,15 @@ export default function DiaryScreen() {
     </View>
   );
 
-  // Phones: the targets are one compact strip of macro bars. The old layout paged through macro bars, energy
-  // rings and nutrient rings above the meals, then repeated the rings and the nutrient panel below them - the
-  // screen opened at every meal spent its first screenful on a monthly-decision surface. The strip keeps the
-  // at-a-glance answer (energy + macros against target) and moves the full analytics into the sheet below;
-  // wide screens keep their dedicated panels.
+  // Phones: the swipeable targets pager (macro bars, energy rings, nutrient rings) stays above the meals -
+  // it is a daily gesture - but the header row above it now opens the sheet with the full energy and
+  // nutrient panels, and the duplicates that used to render below the entries are gone; wide screens keep
+  // their dedicated panels.
   const phoneTargets = (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Targets overview, open energy and nutrient details"
-      onPress={() => setTargetsSheet(true)}
-      style={({ pressed }) => [styles.pad, styles.phoneTargets, pressed && { opacity: 0.7 }]}>
-      <View style={styles.stripHeader}>
-        <AppText variant="label" muted>
-          Targets
-        </AppText>
-        <AppText variant="label" muted>
-          {'Details \u203A'}
-        </AppText>
-      </View>
-      <MacroBars rows={rows} />
-    </Pressable>
+    <View style={[styles.pad, styles.phoneTargets]}>
+      <TargetsHeader onPress={() => setTargetsSheet(true)} />
+      <TargetsPager rows={rows} energy={energyProps} highlights={highlights} />
+    </View>
   );
 
   // Wide windows (beside the sidebar): the page header carries the date controls, the body is the panels of DiaryDesktop.tsx.
@@ -561,7 +552,6 @@ const styles = StyleSheet.create({
   pad: { paddingHorizontal: spacing.lg },
   body: { gap: spacing.md, paddingTop: spacing.sm },
   phoneTargets: { gap: spacing.xs },
-  stripHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sheetBody: { gap: spacing.lg },
   centered: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg },
   hint: { textAlign: 'center', paddingVertical: spacing.md },
