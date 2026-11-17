@@ -306,7 +306,13 @@ export function Collapse({ open, children }: { open: boolean; children: ReactNod
             ? progress.interpolate({ inputRange: [0, 1], outputRange: [0, height] })
             : undefined,
       }}>
-      <View onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>{children}</View>
+      {/* Anchored to the top so it always lays out at its natural size: a child in normal flow can be
+          squeezed by the parent's animated height, which would cache a clipped height and re-play it. */}
+      <View
+        onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
+        {children}
+      </View>
     </Animated.View>
   );
 }
