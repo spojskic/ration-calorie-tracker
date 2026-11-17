@@ -87,7 +87,8 @@ export function MealGroupSection({
             />
           ))
         )}
-      </Collapse>    </View>
+      </Collapse>
+    </View>
   );
 }
 
