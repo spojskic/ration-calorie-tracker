@@ -133,6 +133,11 @@ export default function DashboardScreen() {
           range={range}
           onRangeChange={setRange}
           targetKcal={energy.targetKcal}
+          macroTargets={
+            targets
+              ? { proteinG: targets.macros.protein.grams, carbsG: targets.macros.carbs.grams, fatG: targets.macros.fat.grams }
+              : undefined
+          }
           loading={recent.isLoading}
         />
         <StreakCard days={recent.days} streak={recent.streak} loading={recent.isLoading} />
