@@ -4,6 +4,10 @@
   // Serve <version>-<name>.<subdomain>.workers.dev URLs for uploaded (non-production) versions -
   // the PR preview URLs. Takes effect on the next production deploy (`npx wrangler deploy`).
   "preview_urls": true,
+  // Required by `wrangler preview` (the Worker Previews model that Workers Builds uses for PR
+  // branches after the migration): previews attach to branch-isolated scripts, and this block is
+  // where preview-only bindings would go. Empty is enough for this assets-only worker.
+  "previews": {},
   "assets": {
     "directory": "./apps/app/dist",
     "not_found_handling": "single-page-application"
