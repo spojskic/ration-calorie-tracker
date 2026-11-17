@@ -3,12 +3,14 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   View,
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   type ScrollViewInstance,
 } from 'react-native';
+import { SymbolView } from 'expo-symbols';
 
 import { EnergySummary, type EnergySummaryProps } from '@/components/charts/EnergySummary';
 import { HighlightRings, type HighlightRingItem } from '@/components/charts/HighlightRings';
@@ -172,6 +174,7 @@ export function MacroBars({ rows }: { rows: MacroRow[] }) {
  * the swipe gesture, so tap = details, swipe = pages.
  */
 export function TargetsHeader({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -183,9 +186,12 @@ export function TargetsHeader({ onPress }: { onPress: () => void }) {
         <AppText variant="label" muted>
           Targets
         </AppText>
-        <AppText variant="label" muted>
-          {'\u203A'}
-        </AppText>
+        <SymbolView
+          name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+          size={16}
+          tintColor={colors.textMuted}
+          fallback={<Text style={[styles.headerGlyph, { color: colors.textMuted }]}>{'\u203A'}</Text>}
+        />
       </View>
       <AppText variant="label" muted>
         Consumed
@@ -242,6 +248,7 @@ const styles = StyleSheet.create({
   notch: { position: 'absolute', top: 0, bottom: 0, width: 2, marginLeft: -1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 28 },
   headerLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  headerGlyph: { fontSize: 16, lineHeight: 18 },
   highlights: { gap: spacing.sm },
   dots: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
   dot: { height: PAGER_DOT_SIZE },
