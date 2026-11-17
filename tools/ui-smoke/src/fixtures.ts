@@ -13,6 +13,8 @@
  *                   custom foods, coach chats): the empty states of the Foods tab
  *  - admin          the default data, and the profile is the app owner's (is_admin): More > Admin > Invite people
  *  - friends        the default data plus four more people (Anna, Ben, Dora, Carl; the demo user stays the signed-in one):
+ *  - worst          the default data plus the friends data, with plausible worst-case values everywhere (long names,
+ *                   diacritics, emoji names, a one-letter name, a long e-mail, a single favorite, a huge logged amount):
  *                   Anna is a friend (and shares custom foods, a recipe and an AI estimate), Ben's request is waiting for the demo
  *                   user (incoming), the demo user's request to Dora is waiting for her (outgoing), Carl has no relation
  */
@@ -34,8 +36,8 @@ import { stableUuid, type MockUser } from './session';
 
 export { FIXED_NOW, TODAY } from './constants';
 
-export type FixtureVariant = 'default' | 'imperial' | 'not-onboarded' | 'empty-diary' | 'fresh-account' | 'admin' | 'friends';
-export const FIXTURE_VARIANTS: readonly FixtureVariant[] = ['default', 'imperial', 'not-onboarded', 'empty-diary', 'fresh-account', 'admin', 'friends'];
+export type FixtureVariant = 'default' | 'imperial' | 'not-onboarded' | 'empty-diary' | 'fresh-account' | 'admin' | 'friends' | 'worst';
+export const FIXTURE_VARIANTS: readonly FixtureVariant[] = ['default', 'imperial', 'not-onboarded', 'empty-diary', 'fresh-account', 'admin', 'friends', 'worst'];
 
 // ----------------------------------------------------------------------------- dates
 
@@ -1709,7 +1711,63 @@ export function buildFixtures(variant: FixtureVariant = 'default'): FixtureSet {
     ];
   }
 
-  if (variant === 'friends') addFriendData(tables);
+  if (variant === 'friends' || variant === 'worst') addFriendData(tables);
+  const users =
+    variant === 'friends' || variant === 'worst' ? [USER, ...FRIEND_KEYS.map((k) => FRIEND_USERS[k])] : [USER];
+
+  // The worst-case pass: every adversarial value is something a real user could plausibly have (the friends data
+  // is in, so people and shared foods render too). Limits checked against the migrations: food and profile names
+  // have NO max length (only a non-empty check), diary notes have none either - so long-but-believable it is.
+  if (variant === 'worst') {
+    addFriendData(tables);
+    const WORST_FOOD_NAMES: Record<string, string> = {
+      chickenCooked:
+        'Chicken breast, boneless, skinless, raw — added up to 22% of a solution of retained water, broth or broth solids, flavoring',
+      tomato: 'Bánh mì que ruốc, hàng phố',
+      apple: '🥑 Avocado, organic Hass, small',
+      coffee: 'Øl',
+      cevapi: 'Kobasica - domaća, sušena',
+    };
+    for (const f of tables.foods) {
+      const worst = WORST_FOOD_NAMES[String(f.name)];
+      if (worst) f.name = worst;
+    }
+    // Exactly one favorite: the "1 favorites" count and a lone empty-state escape.
+    if (tables.favorites.length > 0) tables.favorites = tables.favorites.slice(0, 1);
+    // A huge-but-plausible logged amount with a long note (a whole bird at a family dinner).
+    entries.push({
+      id: stableUuid('entry:worst:0'),
+      user_id: USER.id,
+      entry_date: TODAY,
+      meal_group_id: IDS.mealGroup.snacks,
+      food_id: IDS.food.chickenCooked,
+      grams: 1234.5,
+      amount: 1,
+      portion_label: 'whole roasted bird (approx. 1.2 kg)',
+      source: 'manual',
+      ai_confidence: null,
+      note: "Family dinner at grandmama's — the whole bird, and aunt Magdalena's cake afterwards (minus the rum, because of little Timo's allergy).",
+      logged_at: localIso(TODAY, '18:30'),
+    });
+    tables.diary_entries = entries;
+    tables.food_usage = usageRows(entries);
+    // People: a very long name, a one-letter name, a diacritic name, an emoji name. The long e-mail is a
+    // real corporate shape; the seed's `users` carry it for the invite/account screens.
+    const WORST_PEOPLE: Record<string, { name: string; email: string }> = {
+      anna: { name: 'Bartholomew Fitzgerald-Montgomery III', email: 'bartholomew.fitzgerald@northwind-industries-holdings.example.com' },
+      ben: { name: 'Jo', email: 'jo@northwind-industries-holdings.example.com' },
+      dora: { name: 'Đỗ Thị Hằng', email: 'hang.do@northwind-industries-holdings.example.com' },
+      carl: { name: '🧑‍🍳 Chef Carlo', email: 'carlo@northwind-industries-holdings.example.com' },
+    };
+    for (const p of tables.profiles ?? []) {
+      const worst = WORST_PEOPLE[String(p.user_id)];
+      if (worst) p.display_name = worst.name;
+    }
+    for (const u of users) {
+      const worst = WORST_PEOPLE[FRIEND_KEYS.find((k) => FRIEND_USERS[k].id === u.id) ?? ''];
+      if (worst) u.email = worst.email;
+    }
+  }
 
   return {
     variant,
