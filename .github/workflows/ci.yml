@@ -6,32 +6,6 @@ on:
   pull_request:
 
 jobs:
-  # The web preview URL for this PR. Cloudflare's Workers Builds preview builds produce the URL
-  # themselves (https://<branch>.ration.safetpojskic.com), but their PR-comment writer does not
-  # post under the Worker Previews model yet - so we keep one comment updated ourselves. No
-  # secrets needed: the URL is deterministic from the branch name.
-  preview-comment:
-    name: Web preview URL comment
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    concurrency:
-      group: preview-comment-pr-${{ github.event.pull_request.number }}
-      cancel-in-progress: true
-    steps:
-      - uses: actions/checkout@v4
-      - name: Post the preview URL on the PR
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR: ${{ github.event.pull_request.number }}
-          SLUG: ${{ github.head_ref }}
-        run: |
-          SLUG=$(echo "$SLUG" | sed 's|/|-|g')
-          gh pr comment "$PR" \
-            --body "Web preview (updates on every push): **https://$SLUG.ration.safetpojskic.com** — live a couple of minutes after the \`Workers Builds\` check turns green." \
-            --edit-last --create-if-none
-
   # Naming discipline: the PR title and every commit subject must be conventional commits
   # (`type(scope): subject`) - with squash merges the PR title becomes the commit on main.
   conventions:
