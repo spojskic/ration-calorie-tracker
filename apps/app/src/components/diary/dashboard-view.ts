@@ -168,7 +168,7 @@ export function remainingKpi(input: {
 export function streakMessage(streak: number, loggedToday: boolean, loading = false): string {
   if (loading) return '';
   if (streak === 0) return 'Log something today to start a streak.';
-  return loggedToday ? 'Logged today. Nice work.' : 'Log something today to keep it going.';
+  return loggedToday ? 'Logged today. Nice work!' : 'Log something today to keep it going.';
 }
 
 // ------------------------------------------------------------------------------------------------ weight
