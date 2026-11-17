@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/ui';
 import { spacing, useTheme } from '@/theme';
 
-import { formatAmount, formatInt, formatKcal, formatPct, formatSigned } from './format';
+import { formatAmount, formatInt, formatKcal, formatPct, formatSignedKcal } from './format';
 import { describeRate } from './goal-draft';
 import { Divider, KeyValueRow } from './rows';
 import { activityBoost, activityLabel, bmrFormulaLabel } from './options';
@@ -32,27 +32,27 @@ export function EnergyBreakdownTable({
       <KeyValueRow
         label="Baseline Activity Level"
         hint={`${activityLabel(result.activityLevel)} (${activityBoost(result.activityLevel)})`}
-        value={formatSigned(result.baselineActivityKcal)}
+        value={formatSignedKcal(result.baselineActivityKcal)}
       />
       <Divider />
       <KeyValueRow label="Baseline Expenditure" hint="BMR + baseline activity" value={formatKcal(energy.maintenance)} strong />
       <KeyValueRow
         label="Weight Goal Adjustment"
         hint={describeRate(result.rateKgPerWeek, unitSystem)}
-        value={formatSigned(energy.delta)}
+        value={formatSignedKcal(energy.delta)}
       />
       {energy.tefAllowance >= 0.5 ? (
         <KeyValueRow
           label="Thermic Effect of Food"
           hint={`Eating burns about ${formatInt(energy.tefPct * 100)}% of the food while it is digested; the target covers that`}
-          value={formatSigned(energy.tefAllowance)}
+          value={formatSignedKcal(energy.tefAllowance)}
         />
       ) : null}
       {energy.flooredBy > 0 ? (
         <KeyValueRow
           label="Raised to minimum"
           hint={`Targets never go below ${formatKcal(energy.floor)}`}
-          value={formatSigned(energy.flooredBy)}
+          value={formatSignedKcal(energy.flooredBy)}
           valueColor={colors.warning}
         />
       ) : null}

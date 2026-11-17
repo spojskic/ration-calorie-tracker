@@ -18,6 +18,11 @@ export function formatSigned(n: number): string {
   return `${r > 0 ? '+' : '-'}${groupThousands(Math.abs(r))}`;
 }
 
+/** Signed energy adjustment for the target breakdown: 356 -> "+356 kcal", -499 -> "-499 kcal". */
+export function formatSignedKcal(n: number): string {
+  return `${formatSigned(n)} kcal`;
+}
+
 /** Amount with a sensible number of decimals: 123.4 -> "123", 12.34 -> "12.3", 1.234 -> "1.23". */
 export function formatAmount(n: number): string {
   const abs = Math.abs(n);

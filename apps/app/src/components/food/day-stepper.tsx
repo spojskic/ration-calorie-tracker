@@ -5,7 +5,7 @@ import { useSelectedDate } from '@/state/selected-date';
 import { spacing, useTheme } from '@/theme';
 
 import { AppText } from '../ui';
-import { formatDayLabel } from './format';
+import { formatCalendarDate, formatDayLabel } from './format';
 
 /** "< Today >" control bound to the shared diary date (useSelectedDate). */
 export function DayStepper() {
@@ -14,6 +14,8 @@ export function DayStepper() {
   const shift = useSelectedDate((s) => s.shift);
   const goToday = useSelectedDate((s) => s.goToday);
   const label = formatDayLabel(date);
+  // "Today" alone does not say which day it is (an entry can be backdated): the line under it spells the date out.
+  const spelled = formatCalendarDate(date);
   return (
     <View style={styles.row}>
       <Pressable
@@ -29,7 +31,7 @@ export function DayStepper() {
         onPress={goToday}
         style={styles.center}>
         <AppText variant="body" style={{ fontWeight: '700' }}>{label}</AppText>
-        <AppText variant="small" muted>{date}</AppText>
+        <AppText variant="small" muted>{spelled}</AppText>
       </Pressable>
       <Pressable
         accessibilityRole="button"

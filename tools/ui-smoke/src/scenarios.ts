@@ -2449,6 +2449,10 @@ export const SCENARIOS: Scenario[] = [
     auth: 'signed-in',
     expect: ['Macro & Energy Targets', 'Weight Goal', 'Energy calculation'],
     async after(page, ctx) {
+      await ctx.check('the target breakdown names the unit on every adjustment', async () => {
+        const signed = await page.getByText(/^[+-]\d[\d,]* kcal$/).count();
+        if (signed < 2) throw new Error(`${signed} signed "kcal" rows in the breakdown`);
+      });
       await ctx.step('scroll to the weight goal', () => scrollToText(page, 'Weight Goal'));
       await ctx.snapshot('weight-goal');
       await stepThen(ctx, 'switch the goal to maintain and save', async () => {
