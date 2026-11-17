@@ -1728,12 +1728,12 @@ export function buildFixtures(variant: FixtureVariant = 'default'): FixtureSet {
       coffee: 'Øl',
       cevapi: 'Kobasica - domaća, sušena',
     };
-    for (const f of tables.foods) {
+    for (const f of tables.foods ?? []) {
       const worst = WORST_FOOD_NAMES[String(f.name)];
       if (worst) f.name = worst;
     }
     // Exactly one favorite: the "1 favorites" count and a lone empty-state escape.
-    if (tables.favorites.length > 0) tables.favorites = tables.favorites.slice(0, 1);
+    tables.favorites = (tables.favorites ?? []).slice(0, 1);
     // A huge-but-plausible logged amount with a long note (a whole bird at a family dinner).
     entries.push({
       id: stableUuid('entry:worst:0'),
