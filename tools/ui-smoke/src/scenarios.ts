@@ -2279,6 +2279,12 @@ export const SCENARIOS: Scenario[] = [
       }, async () => {
         await ctx.expectUrl(/\/recipe\/new/);
         await ctx.expectText('Oats, rolled, dry');
+        // "1/2 cup" (40 g) and "1 cup" (81 g) both strip to "cup": the chips carry their per-unit grams, so the wrong
+        // one cannot be picked and silently double the ingredient.
+        await ctx.check('the two cup portions of oats are told apart on their chips', async () => {
+          await ctx.expectText('cup \u00B7 80 g');
+          await ctx.expectText('cup \u00B7 81 g');
+        });
         await ctx.snapshot('with-ingredient');
         await stepThen(ctx, 'save the recipe', () => clickButton(page, /Save recipe/), async () => {
           await ctx.expectMutation('foods', 'insert', (m) => payloadOf(m).kind === 'recipe' && payloadOf(m).name === 'Zobena kaša s bananom');
