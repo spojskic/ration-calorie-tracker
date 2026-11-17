@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatNumber } from '@/components/charts/format';
+import { pressedDip } from '@/components/press';
 import { AppText } from '@/components/ui';
 import { spacing, useTheme } from '@/theme';
 
@@ -9,15 +10,18 @@ export const DEFAULT_WATER_TARGET_ML = 2600;
 /** Amount suggested by the quick-add button. */
 export const QUICK_WATER_ML = 250;
 
-/** Water progress (ml / target) as a flat row with a quick "+250 mL" button. */
+/** Water progress (ml / target) as a flat row with a quick "+250 ml" button that adds directly; the row itself opens the water form. */
 export function WaterRow({
   ml,
   target,
   onAdd,
+  onOpen,
 }: {
   ml: number | undefined;
   target: number;
   onAdd: () => void;
+  /** Opens the water form (any amount, history): the whole info area is the tap target. */
+  onOpen: () => void;
 }) {
   const { colors, radius, shape } = useTheme();
   const value = ml ?? 0;
@@ -25,7 +29,15 @@ export function WaterRow({
   const reached = fraction >= 1;
 
   return (
-    <View style={[styles.row, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Open water logging"
+      onPress={onOpen}
+      style={({ pressed }) => [
+        styles.row,
+        { borderBottomColor: colors.border, backgroundColor: colors.background },
+        pressed && { opacity: pressedDip(pressed).opacity },
+      ]}>
       <View
         accessible
         accessibilityRole="progressbar"
@@ -35,7 +47,7 @@ export function WaterRow({
         <View style={styles.line}>
           <AppText style={{ fontWeight: '700' }}>Water</AppText>
           <AppText variant="small" muted>
-            {ml === undefined ? '-' : formatNumber(value)} / {formatNumber(target)} mL
+            {ml === undefined ? '-' : formatNumber(value)} / {formatNumber(target)} ml
           </AppText>
         </View>
         <View style={[styles.track, { backgroundColor: colors.track, borderRadius: shape.bar(TRACK_HEIGHT) }]}>
@@ -56,9 +68,9 @@ export function WaterRow({
           styles.button,
           { backgroundColor: pressed ? colors.track : colors.surfaceAlt, borderColor: colors.border, borderRadius: radius.pill },
         ]}>
-        <AppText style={{ fontSize: 13, fontWeight: '700', color: colors.primary }}>+ {QUICK_WATER_ML} mL</AppText>
+        <AppText style={{ fontSize: 13, fontWeight: '700', color: colors.primary }}>+ {QUICK_WATER_ML} ml</AppText>
       </Pressable>
-    </View>
+    </Pressable>
   );
 }
 

@@ -1712,14 +1712,19 @@ export function buildFixtures(variant: FixtureVariant = 'default'): FixtureSet {
   }
 
   if (variant === 'friends' || variant === 'worst') addFriendData(tables);
+  // Cloned for 'worst': the worst e-mails must not leak into the shared FRIEND_USERS objects that every
+  // other variant (and the friends tests) read.
   const users =
-    variant === 'friends' || variant === 'worst' ? [USER, ...FRIEND_KEYS.map((k) => FRIEND_USERS[k])] : [USER];
+    variant === 'friends'
+      ? [USER, ...FRIEND_KEYS.map((k) => FRIEND_USERS[k])]
+      : variant === 'worst'
+        ? [USER, ...FRIEND_KEYS.map((k) => ({ ...FRIEND_USERS[k] }))]
+        : [USER];
 
   // The worst-case pass: every adversarial value is something a real user could plausibly have (the friends data
   // is in, so people and shared foods render too). Limits checked against the migrations: food and profile names
   // have NO max length (only a non-empty check), diary notes have none either - so long-but-believable it is.
   if (variant === 'worst') {
-    addFriendData(tables);
     const WORST_FOOD_NAMES: Record<string, string> = {
       chickenCooked:
         'Chicken breast, boneless, skinless, raw — added up to 22% of a solution of retained water, broth or broth solids, flavoring',
@@ -1771,7 +1776,7 @@ export function buildFixtures(variant: FixtureVariant = 'default'): FixtureSet {
 
   return {
     variant,
-    seed: { users: variant === 'friends' ? [USER, ...FRIEND_KEYS.map((k) => FRIEND_USERS[k])] : [USER], tables },
+    seed: { users, tables },
     user: USER,
     today: TODAY,
     ids: IDS,
