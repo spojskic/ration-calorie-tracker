@@ -37,10 +37,15 @@ release without it crashes at startup. This is why hand-created `android/` dirs 
 
 ## Web deploy
 
-`pnpm --filter @ration/app export:web` → `apps/app/dist`, deployed as Cloudflare Worker static
-assets via the root `wrangler.jsonc` (site: https://ration.safetpojskic.com). Deployment is manual:
-`npx wrangler deploy`. There is NO push-to-deploy workflow; CI on push to `main` only typechecks,
-tests and exports.
+The web app deploys **automatically**: the `ration-calorie-tracker` Worker is connected to
+Cloudflare Workers Builds, so every push to `main` builds and deploys production
+(https://ration.safetpojskic.com), and every PR branch gets its own **preview** at
+`https://<branch>.ration.safetpojskic.com` (custom domain, one URL per branch, always the latest
+build of that branch; the check on the PR lists the per-commit URLs too). Requirements baked into
+the repo: `preview_urls: true` and a `previews: {}` block in `wrangler.jsonc`, and the build
+settings' preview command (Workers Builds, not a repo file). A manual `npx wrangler deploy` from
+`apps/app/dist` (built with `pnpm --filter @ration/app export:web`) still works and is only needed
+when you want to deploy a state that is not on a branch — deploys from `main` are the normal path.
 
 ## Supabase deploys
 
