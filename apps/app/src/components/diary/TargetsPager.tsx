@@ -90,8 +90,9 @@ export function Pager({ pages }: { pages: PagerPage[] }) {
   );
 }
 
+// The percentage is text, not a bar: use the text-grade tones (4.5 : 1 on the card), while the fills keep the graphic ones.
 const toneColor = (tone: PercentTone, colors: ThemeColors): string =>
-  tone === 'success' ? colors.success : tone === 'danger' ? colors.danger : colors.textMuted;
+  tone === 'success' ? colors.successText : tone === 'danger' ? colors.dangerText : colors.textMuted;
 
 /**
  * One compact macro row: "Energy 2,376 / 2,195 kcal" on the left, the percentage on the right (green once a goal is
