@@ -17,11 +17,18 @@ import { WIDE_BREAKPOINT, spacing, useTheme, withAlpha } from '@/theme';
 import { IconButton } from './IconButton';
 
 /**
+ * How long to wait before opening another modal after this one closes. Must exceed the native modal
+ * transition (~300ms on both platforms; the sheet slides up / down since `animationType` is `slide`),
+ * so a follow-up sheet never opens while the previous one is still animating away.
+ */
+const MODAL_SETTLE_MS = 400;
+
+/**
  * Presents `fn` after the current modal finished closing. Two native modals cannot be swapped in the same tick
  * on iOS, so menus use this to open a follow-up sheet.
  */
 export function runAfterModal(fn: () => void): void {
-  setTimeout(fn, Platform.OS === 'ios' ? 380 : 60);
+  setTimeout(fn, MODAL_SETTLE_MS);
 }
 
 /** How strongly the sheet dims the screen behind it (the colour is the palette's `scrim`). */
@@ -49,7 +56,7 @@ export function Sheet({
   // react-native-web's Modal only becomes active (Escape closes it, focus is trapped) once its fade-in animation
   // ended, and it keeps a click-blocking layer while it fades out. On the web the sheet therefore appears and
   // disappears at once, so Escape works immediately and the page is usable the moment the sheet is closed.
-  const animationType = Platform.OS === 'web' ? 'none' : 'fade';
+  const animationType = Platform.OS === 'web' ? 'none' : 'slide';
 
   return (
     <Modal visible={visible} transparent animationType={animationType} onRequestClose={onClose} statusBarTranslucent>

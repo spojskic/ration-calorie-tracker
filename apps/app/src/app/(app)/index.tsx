@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from 'expo-router';
@@ -11,7 +12,7 @@ import { go } from '@/components/diary/nav';
 import { energySummaryProps } from '@/components/diary/energy-view';
 import { buildMacroRows, consumedSplit, targetSplit } from '@/components/diary/targets-view';
 import { MacroBars } from '@/components/diary/TargetsPager';
-import { AppText, Button, Card, Screen } from '@/components/ui';
+import { AppRefreshControl, AppText, Button, Card, Screen } from '@/components/ui';
 import { useDayNutrients, useRecentDays } from '@/data/diary';
 import { useDayEnergyFrom } from '@/data/energy';
 import { useEnergySummaryMode } from '@/data/energy-mode';
@@ -38,6 +39,19 @@ export default function DashboardScreen() {
   const gate = useAiGate();
   const recent = useRecentDays(90);
   const weight = useWeightHistory(30);
+  const qc = useQueryClient();
+  // Pull-to-refresh: syncs everything the dashboard reads (today's totals, the recent-days window, targets and
+  // the weight history) — the same data server-side integrations (Garmin, Apple Health) write while you are away.
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = () => {
+    setRefreshing(true);
+    Promise.all([
+      qc.invalidateQueries({ queryKey: ['day', today] }),
+      qc.invalidateQueries({ queryKey: ['biometrics'] }),
+      qc.invalidateQueries({ queryKey: ['targets'] }),
+      weight.refetch(),
+    ]).finally(() => setRefreshing(false));
+  };
   const [range, setRange] = useState<Range>('7');
 
   const weightPoints = weight.data ?? EMPTY_POINTS;
@@ -99,7 +113,9 @@ export default function DashboardScreen() {
   }
 
   return (
-    <Screen title="Dashboard">
+    <Screen
+      title="Dashboard"
+      refreshControl={<AppRefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <QuickAddRow />
 
       {targetsQ.needsOnboarding ? (
@@ -133,6 +149,11 @@ export default function DashboardScreen() {
           range={range}
           onRangeChange={setRange}
           targetKcal={energy.targetKcal}
+          macroTargets={
+            targets
+              ? { proteinG: targets.macros.protein.grams, carbsG: targets.macros.carbs.grams, fatG: targets.macros.fat.grams }
+              : undefined
+          }
           loading={recent.isLoading}
         />
         <StreakCard days={recent.days} streak={recent.streak} loading={recent.isLoading} />

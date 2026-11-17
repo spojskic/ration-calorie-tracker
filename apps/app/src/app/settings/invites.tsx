@@ -21,7 +21,7 @@ import {
 } from '@/components/settings/invite-view';
 import { Badge, Chip, Divider, Note } from '@/components/settings/rows';
 import { PillButton } from '@/components/pill-button';
-import { AppText, Button, Card, Screen } from '@/components/ui';
+import { AppText, Button, Card, Collapse, Screen } from '@/components/ui';
 import { useCreateInviteCode, useInvitePage, useIsSuperAdmin, useRevokeInviteCode } from '@/data/invites';
 import { copyText } from '@/lib/copy-text';
 import { spacing, useTheme } from '@/theme';
@@ -205,7 +205,7 @@ function InviteAdmin() {
             <View style={styles.spacer} />
             <AppText variant="small" style={styles.toggle}>{showClosed ? 'Hide' : 'Show'}</AppText>
           </Pressable>
-          {showClosed ? (
+          <Collapse open={showClosed}>
             <>
               {closed.data && closedInfo.page !== closedPage ? <GonePage onBack={() => setClosedPage(closedInfo.page)} /> : null}
               {(closed.data?.rows ?? []).map((code, i) => (
@@ -222,7 +222,7 @@ function InviteAdmin() {
                 onNext={() => setClosedPage(closedInfo.page + 1)}
               />
             </>
-          ) : null}
+          </Collapse>
         </Card>
       ) : null}
 

@@ -95,6 +95,16 @@ export const FRIEND_SCENARIOS: Scenario[] = [
     },
   },
   {
+    // The 'worst' fixture variant: very long names and e-mails, a one-letter name, diacritics, an emoji name.
+    // Minimal assertions on purpose - this exists to be LOOKED at (phone + desktop screenshots).
+    name: 'worst case: friends',
+    route: '/friends',
+    path: '/friends',
+    auth: 'signed-in',
+    fixtures: 'worst',
+    expect: ['Friends'],
+  },
+  {
     name: 'friends: friends, requests and the request I sent are listed',
     route: '/friends',
     path: '/friends',

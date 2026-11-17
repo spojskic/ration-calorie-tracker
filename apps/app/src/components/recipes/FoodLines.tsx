@@ -7,7 +7,7 @@ import { hapticSelection } from '@/components/food/feedback';
 import { formatKcal, trimNumber } from '@/components/food/format';
 import { buildServingOptions, isGramOption, type ServingOption } from '@/components/food/serving';
 import { ServingPicker } from '@/components/food/serving-picker';
-import { AppText, Button } from '@/components/ui';
+import { AppText, Button, Collapse } from '@/components/ui';
 import type { IngredientFood } from '@/data/recipes';
 import { clearFoodPick, startFoodPick, type PickHandler, type PickedFood } from '@/state/food-picker';
 import { spacing, useTheme } from '@/theme';
@@ -260,7 +260,7 @@ function FoodLineRow({
         </View>
         <AppText muted>{expanded ? '\u25BE' : '\u25B8'}</AppText>
       </Pressable>
-      {expanded ? (
+      <Collapse open={expanded}>
         <View style={[styles.editor, { borderTopColor: colors.border }]}>
           <ServingPicker
             amountText={line.amountText}
@@ -289,7 +289,7 @@ function FoodLineRow({
             <AppText style={{ color: colors.danger, fontWeight: '700' }}>Remove</AppText>
           </Pressable>
         </View>
-      ) : null}
+      </Collapse>
     </View>
   );
 }

@@ -245,7 +245,7 @@ describe('scenarios', () => {
 
   it('cover both auth modes and every fixture variant', () => {
     expect(new Set(SCENARIOS.map((s) => s.auth))).toEqual(new Set(['signed-in', 'signed-out']));
-    expect(new Set(SCENARIOS.map((s) => s.fixtures ?? 'default'))).toEqual(new Set(['default', 'imperial', 'not-onboarded', 'empty-diary', 'fresh-account', 'admin', 'friends']));
+    expect(new Set(SCENARIOS.map((s) => s.fixtures ?? 'default'))).toEqual(new Set(['default', 'imperial', 'not-onboarded', 'empty-diary', 'fresh-account', 'admin', 'friends', 'worst']));
     expect(SCENARIOS.length).toBeGreaterThanOrEqual(55);
   });
 

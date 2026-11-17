@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { Glyph, glyphNameFor } from '@/components/Glyph';
+import { pressedDip } from '@/components/press';
 import { useTheme } from '@/theme';
 
 /** Round glyph button (a rounded square in the boxy look) used in bars and rows (prev/next, +, overflow). The common glyphs are drawn, so they are centred. */
@@ -38,7 +39,7 @@ export function IconButton({
           height: size,
           borderRadius: shape.circle(size),
           backgroundColor: filled ? colors.primary : pressed ? colors.surfaceAlt : 'transparent',
-          opacity: disabled ? 0.4 : pressed && filled ? 0.85 : 1,
+          opacity: disabled ? 0.4 : filled ? pressedDip(pressed).opacity : 1,
         },
       ]}>
       {drawn ? (

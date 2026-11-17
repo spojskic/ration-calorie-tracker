@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -18,7 +19,7 @@ import {
 } from '@/components/friends/friends-view';
 import { PillButton } from '@/components/pill-button';
 import { Badge, Divider, Note } from '@/components/settings/rows';
-import { AppText, Button, Card, Screen } from '@/components/ui';
+import { AppRefreshControl, AppText, Button, Card, Screen } from '@/components/ui';
 import {
   useFriendships,
   useRemoveFriendship,
@@ -38,6 +39,16 @@ export default function FriendsScreen() {
   const send = useSendFriendRequest();
   const respond = useRespondFriendRequest();
   const remove = useRemoveFriendship();
+  const qc = useQueryClient();
+  // Pull-to-refresh: requests arrive from other people, so the list can change while the screen is open.
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = () => {
+    setRefreshing(true);
+    void list
+      .refetch()
+      .then(() => qc.invalidateQueries({ queryKey: ['friends'] }))
+      .finally(() => setRefreshing(false));
+  };
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [sentMessage, setSentMessage] = useState<string | null>(null);
@@ -63,7 +74,7 @@ export default function FriendsScreen() {
   const actionError = respond.error ?? remove.error;
 
   return (
-    <Screen>
+    <Screen refreshControl={<AppRefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <Stack.Screen options={{ headerShown: true, title: 'Friends' }} />
       <View style={styles.stack}>
         <Card>

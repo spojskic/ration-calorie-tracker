@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   View,
@@ -31,9 +30,10 @@ import { TargetsHeader, TargetsPager } from '@/components/diary/TargetsPager';
 import { ToastHost } from '@/components/diary/ToastHost';
 import { useCopyActions } from '@/components/diary/use-copy-actions';
 import { DEFAULT_WATER_TARGET_ML, QUICK_WATER_ML, WaterRow } from '@/components/diary/WaterRow';
+import { useAddWater } from '@/data/activity-write';
 import { DesktopPage } from '@/components/panel';
 import { AddSavedMealSheet, SaveMealSheet } from '@/components/recipes/SavedMealControls';
-import { AppText, Button, Card } from '@/components/ui';
+import { AppRefreshControl, AppText, Button, Card } from '@/components/ui';
 import { useBiometrics, useNotes, useWaterMl } from '@/data/activity';
 import { UNGROUPED, useDayNutrients, useDiaryEntries, type DiaryEntry } from '@/data/diary';
 import { isPastDate, itemWord, sortEntriesByTime } from '@/data/diary-copy';
@@ -83,6 +83,7 @@ export default function DiaryScreen() {
   const profileQ = useProfile();
   const groupsQ = useMealGroups();
   const waterQ = useWaterMl(date);
+  const addWater = useAddWater();
   const biometricsQ = useBiometrics(date);
   const notesQ = useNotes(date);
 
@@ -340,7 +341,18 @@ export default function DiaryScreen() {
           Nothing logged yet. Tap + to add food.
         </AppText>
       ) : null}
-      <WaterRow ml={waterQ.data} target={waterTarget} onAdd={() => go('/water/new', { ml: QUICK_WATER_ML })} />
+      <WaterRow
+        ml={waterQ.data}
+        target={waterTarget}
+        onAdd={() => {
+          haptic('light');
+          void addWater
+            .mutateAsync({ entryDate: date, ml: QUICK_WATER_ML })
+            .then(() => haptic('success'))
+            .catch(() => haptic('error'));
+        }}
+        onOpen={() => go('/water/new')}
+      />
     </View>
   );
 
@@ -399,7 +411,7 @@ export default function DiaryScreen() {
           onMenu={() => openMenu({ kind: 'date' })}
         />
       }
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
+      refreshControl={<AppRefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <DesktopDiaryBody
         list={diaryList}
         rows={rows}
@@ -413,7 +425,7 @@ export default function DiaryScreen() {
   ) : (
     <ScrollView
       stickyHeaderIndices={[0]}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+      refreshControl={<AppRefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       contentContainerStyle={styles.scroll}
       keyboardShouldPersistTaps="handled">
       <View style={[styles.stickyOuter, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>

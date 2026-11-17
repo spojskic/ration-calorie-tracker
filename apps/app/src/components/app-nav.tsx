@@ -18,6 +18,7 @@ import { DASHBOARD_ROW, DIARY_ROW, FOODS_ROW } from '@/components/desktop/sideba
 import { useDesktopShell } from '@/components/desktop/shell-context';
 import { tabBadgeText } from '@/components/friends/friends-view';
 import { Glyph } from '@/components/Glyph';
+import { pressedDip } from '@/components/press';
 import { useFriendRequestCount } from '@/data/friends';
 import { spacing, useTheme } from '@/theme';
 
@@ -107,7 +108,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
                 accessibilityRole="button"
                 accessibilityLabel="Add to diary"
                 onPress={openAddSheet}
-                style={styles.fabWrap}>
+                style={({ pressed }) => [styles.fabWrap, pressedDip(pressed)]}>
                 <View style={[styles.fab, { backgroundColor: colors.primary, borderRadius: shape.circle(FAB_SIZE) }]}>
                   <Glyph name="plus" size={30} color={colors.onPrimary} strokeWidth={2.4} />
                 </View>
@@ -151,7 +152,7 @@ function BottomButton({
       accessibilityRole="link"
       accessibilityLabel={item.label}
       {...(badgeLabel ? { accessibilityValue: { text: badgeLabel } } : {})}
-      style={styles.bottomButton}>
+      style={({ pressed }) => [styles.bottomButton, pressedDip(pressed)]}>
       <View>
         <SymbolView name={item.symbol} size={22} tintColor={color} />
         {badge ? (

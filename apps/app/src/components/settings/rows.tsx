@@ -2,6 +2,7 @@ import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { pressedDip } from '@/components/press';
 import { AppText } from '@/components/ui';
 import { spacing, useTheme } from '@/theme';
 
@@ -168,7 +169,7 @@ export function Chip({
           backgroundColor: selected ? colors.primary : colors.surfaceAlt,
           borderColor: selected ? colors.primary : colors.border,
           borderRadius: radius.pill,
-          opacity: pressed ? 0.8 : 1,
+          opacity: pressedDip(pressed).opacity,
         },
       ]}>
       <Text style={[styles.chipLabel, { color: selected ? colors.onPrimary : colors.text }]}>{label}</Text>
@@ -193,7 +194,7 @@ export function CollapsibleHeader({
       accessibilityLabel={label}
       accessibilityState={{ expanded: open }}
       onPress={onToggle}
-      style={({ pressed }) => [styles.collapsible, { opacity: pressed ? 0.7 : 1 }]}>
+      style={({ pressed }) => [styles.collapsible, pressedDip(pressed)]}>
       <AppText variant="body" style={[styles.bold, styles.flex]}>{label}</AppText>
       <AppText variant="small" style={{ color: colors.accent, fontWeight: '700' }}>{open ? 'Hide' : 'Show'}</AppText>
     </Pressable>

@@ -6,6 +6,8 @@ import { MiniBarChart, type MiniBar } from '@/components/charts/MiniBarChart';
 import { Sparkline } from '@/components/charts/Sparkline';
 import { formatNumber } from '@/components/charts/format';
 import { Segmented } from '@/components/forms';
+import { MacroBars } from '@/components/diary/TargetsPager';
+import type { MacroRow } from '@/components/diary/targets-view';
 import { AppText, Button, Card } from '@/components/ui';
 import { averageOfDays, type RecentDay } from '@/data/diary';
 import type { WeightPoint } from '@/data/weight';
@@ -70,12 +72,15 @@ export function AverageCard({
   range,
   onRangeChange,
   targetKcal,
+  macroTargets,
   loading,
 }: {
   days: readonly RecentDay[];
   range: Range;
   onRangeChange: (range: Range) => void;
   targetKcal?: number;
+  /** Today's macro targets in grams: when present the rows are progress toward them (per logged day average), like the Today card. */
+  macroTargets?: { proteinG: number; carbsG: number; fatG: number };
   loading?: boolean;
 }) {
   const { colors } = useTheme();
@@ -88,6 +93,13 @@ export function AverageCard({
     label: n <= 14 ? weekdayInitial(d.date) : '',
     empty: !d.logged,
   }));
+  const targetRows: MacroRow[] = macroTargets
+    ? [
+        { key: 'protein', label: 'Protein', unit: 'g', value: avg.proteinG, target: macroTargets.proteinG, color: colors.protein, overIsBad: false, decimals: 1 },
+        { key: 'carbs', label: 'Carbs', unit: 'g', value: avg.carbsG, target: macroTargets.carbsG, color: colors.carbs, overIsBad: true, decimals: 1 },
+        { key: 'fat', label: 'Fat', unit: 'g', value: avg.fatG, target: macroTargets.fatG, color: colors.fat, overIsBad: true, decimals: 1 },
+      ]
+    : [];
   const macros = [
     { key: 'protein', label: 'Protein', g: avg.proteinG, pct: avg.proteinPct, color: colors.protein },
     { key: 'carbs', label: 'Carbs', g: avg.carbsG, pct: avg.carbsPct, color: colors.carbs },
@@ -124,20 +136,25 @@ export function AverageCard({
             Last {n} days, {avg.loggedDays} logged
           </AppText>
           <MiniBarChart bars={bars} target={targetKcal} color={colors.energy} accessibilityLabel={`Daily energy, last ${n} days`} />
-          <View style={styles.macroList}>
-            {macros.map((m) => (
-              <View
-                key={m.key}
-                accessible
-                accessibilityLabel={`${m.label} ${formatNumber(m.g, 1, true)} grams, ${Math.round(m.pct)} percent of calories`}
-                style={styles.macroRow}>
-                <View style={[styles.dot, { backgroundColor: m.color }]} />
-                <AppText style={styles.macroName}>{m.label}</AppText>
-                <AppText muted>{formatNumber(m.g, 1, true)} g</AppText>
-                <AppText style={styles.macroPct}>{Math.round(m.pct)}%</AppText>
-              </View>
-            ))}
-          </View>
+          {macroTargets ? (
+            <MacroBars rows={targetRows} />
+          ) : (
+            <View style={styles.macroList}>
+              {macros.map((m) => (
+                <View
+                  key={m.key}
+                  accessible
+                  accessibilityLabel={`${m.label} ${formatNumber(m.g, 1, true)} grams, ${Math.round(m.pct)} percent of calories`}
+                  style={styles.macroRow}>
+                  <View style={[styles.dot, { backgroundColor: m.color }]} />
+                  <AppText style={styles.macroName}>{m.label}</AppText>
+                  <AppText muted>{formatNumber(m.g, 1, true)} g</AppText>
+                  <AppText style={styles.macroPct}>{Math.round(m.pct)}%</AppText>
+                </View>
+              ))}
+              <AppText variant="small" muted>Share of the calories, not progress toward a target.</AppText>
+            </View>
+          )}
         </>
       )}
     </Card>

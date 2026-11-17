@@ -125,7 +125,7 @@ Append an object to `SCENARIOS` in `src/scenarios.ts`:
   route: '/water/new',                     // expo-router pattern (checked against apps/app/src/app)
   path: '/water/new',                      // or (fixtures) => `/food/${fixtures.ids.food.egg}`
   auth: 'signed-in',                       // or 'signed-out'
-  fixtures: 'default',                     // 'imperial' | 'not-onboarded' | 'empty-diary' | 'fresh-account' | 'admin' | 'friends'
+  fixtures: 'default',                     // 'imperial' | 'not-onboarded' | 'empty-diary' | 'fresh-account' | 'admin' | 'friends' | 'worst'
   expect: ["Today's total"],               // text that must be visible after load
   expectInputs: [],                        // input VALUES after load: [{ field: 'Food name', value: 'Ćevapi' }]
   allowBackendErrors: [],                  // expected 4xx, e.g. ['/auth/v1/token'] or /23505/
@@ -156,6 +156,16 @@ Append an object to `SCENARIOS` in `src/scenarios.ts`:
 
 Other extension points: `src/known-noise.ts` (console messages to ignore), `src/fixtures.ts` (data and
 variants), `src/schema.ts` (new tables), `src/mock-backend.ts` (new RPCs).
+
+## Worst-case data
+
+The `worst` fixture variant is the friends data plus plausible adversarial values everywhere: a 140-character
+FDC-style food name, Vietnamese diacritics, an emoji-leading name, a two-character name, a hyphenated custom
+food, exactly one favorite, a 1.2 kg logged amount with a long note, and people with a very long name, a
+one-letter name, diacritics and an emoji name plus long corporate e-mails. The four `worst case:` scenarios
+have minimal assertions on purpose — they exist to be **looked at** (phone + desktop screenshots in the report)
+for layout breaks. Migrations give food/profile names and diary notes no max length, so the values are
+long-but-believable, never random.
 
 ## Known limits
 

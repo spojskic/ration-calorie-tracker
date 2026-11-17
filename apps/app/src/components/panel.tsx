@@ -40,6 +40,7 @@ import {
   type BarRow,
   type BarTone,
 } from './desktop-layout';
+import { pressedDip } from './press';
 
 /** Panels, strips and the page header are drawn with a 1 px border. */
 const BORDER = 1;
@@ -197,7 +198,7 @@ export function Panel({
           accessibilityLabel={action.accessibilityLabel ?? action.label}
           hitSlop={6}
           onPress={action.onPress}
-          style={({ pressed }) => [styles.panelAction, pressed && { opacity: 0.6 }]}>
+          style={({ pressed }) => [styles.panelAction, pressedDip(pressed)]}>
           <Text numberOfLines={1} style={[styles.panelActionText, { color: colors.primary }]}>
             {action.label}
           </Text>
@@ -311,7 +312,7 @@ export function ToolbarButton({
           backgroundColor: primary ? colors.primary : pressed ? colors.surfaceAlt : colors.surface,
           borderColor: primary ? colors.primary : colors.border,
           borderRadius: radius.md,
-          opacity: primary && pressed ? 0.85 : 1,
+          opacity: primary ? pressedDip(pressed).opacity : 1,
         },
       ]}>
       {symbol ? <SymbolView name={symbol} size={14} tintColor={primary ? colors.onPrimary : colors.primary} /> : null}
@@ -491,7 +492,16 @@ const VALUE_CHAR_WIDTH = 6.9;
 const PCT_CHAR_WIDTH = 9;
 
 /** Rows of label | bar | value | percentage, with the value and percentage columns as wide as their widest text so the bars line up. */
-export function BarList({ rows, labelWidth = 76 }: { rows: BarRow[]; labelWidth?: number }) {
+export function BarList({
+  rows,
+  labelWidth = 76,
+  progress = true,
+}: {
+  rows: BarRow[];
+  labelWidth?: number;
+  /** False when the bars are shares of a whole (not progress toward anything): no progressbar role. */
+  progress?: boolean;
+}) {
   const { colors, shape } = useTheme();
   const valueWidth = textColumnWidth(
     rows.map((r) => r.valueText),
@@ -509,9 +519,9 @@ export function BarList({ rows, labelWidth = 76 }: { rows: BarRow[]; labelWidth?
         <View
           key={row.key}
           accessible
-          accessibilityRole="progressbar"
+          accessibilityRole={progress ? 'progressbar' : undefined}
           accessibilityLabel={row.accessibilityLabel}
-          accessibilityValue={row.now === undefined ? undefined : { min: 0, max: 100, now: row.now }}
+          accessibilityValue={progress && row.now !== undefined ? { min: 0, max: 100, now: row.now } : undefined}
           style={styles.barRow}>
           <Text numberOfLines={1} style={[styles.barLabel, { width: labelWidth, color: colors.text }]}>
             {row.label}

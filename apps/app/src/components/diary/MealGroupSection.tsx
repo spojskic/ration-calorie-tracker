@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
 import { formatNumber } from '@/components/charts/format';
-import { AppText } from '@/components/ui';
+import { Collapse, AppText } from '@/components/ui';
 import type { DiaryEntry } from '@/data/diary';
 import { spacing, useTheme } from '@/theme';
 
@@ -71,8 +71,8 @@ export function MealGroupSection({
         {onAdd ? <IconButton glyph="+" label={`Add food to ${name}`} onPress={onAdd} size={36} /> : null}
         {onMenu ? <IconButton glyph={'\u22EF'} label={`${name} options`} onPress={onMenu} size={36} /> : null}
       </View>
-      {!collapsed ? (
-        count === 0 ? (
+      <Collapse open={!collapsed}>
+        {count === 0 ? (
           <AppText variant="small" muted style={[styles.empty, { borderBottomColor: colors.border }]}>
             Nothing logged yet
           </AppText>
@@ -86,9 +86,8 @@ export function MealGroupSection({
               onDelete={onEntryDelete ? () => onEntryDelete(entry) : undefined}
             />
           ))
-        )
-      ) : null}
-    </View>
+        )}
+      </Collapse>    </View>
   );
 }
 

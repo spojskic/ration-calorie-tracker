@@ -126,7 +126,8 @@ describe('friends: schema, RPC list and fixtures', () => {
     for (const variant of FIXTURE_VARIANTS) {
       expect(createMockBackend(buildFixtures(variant).seed).integrityErrors(), variant).toEqual([]);
     }
-    for (const variant of FIXTURE_VARIANTS.filter((v) => v !== 'friends')) {
+    // 'worst' intentionally carries the friends data with adversarial names, so it is exempt here too.
+    for (const variant of FIXTURE_VARIANTS.filter((v) => v !== 'friends' && v !== 'worst')) {
       expect(buildFixtures(variant).seed.tables.friendships, variant).toEqual([]);
       expect(buildFixtures(variant).seed.users, variant).toHaveLength(1);
     }

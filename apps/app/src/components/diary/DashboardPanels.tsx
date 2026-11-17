@@ -222,12 +222,15 @@ function AveragePanel({
   range,
   onRangeChange,
   targetKcal,
+  rows,
   loading,
 }: {
   days: readonly RecentDay[];
   range: DashboardRange;
   onRangeChange: (range: DashboardRange) => void;
   targetKcal: number | undefined;
+  /** The Today card's macro rows: reused for the targets (only the values become the window average). */
+  rows: MacroRow[];
   loading: boolean;
 }) {
   const { colors } = useTheme();
@@ -240,6 +243,11 @@ function AveragePanel({
     label: n <= 14 ? weekdayInitial(d.date) : '',
     empty: !d.logged,
   }));
+  // Progress toward the macro targets, like the Today card, with the window's average as the value.
+  const avgByMacro: Record<string, number> = { protein: avg.proteinG, carbs: avg.carbsG, fat: avg.fatG };
+  const targetRows = rows
+    .filter((r) => r.key !== 'energy')
+    .map((r) => ({ ...r, value: avgByMacro[r.key] }));
   const macros = averageBarRows(
     [
       { key: 'protein', label: 'Protein', g: avg.proteinG, pct: avg.proteinPct, color: colors.protein },
@@ -275,7 +283,14 @@ function AveragePanel({
             </AppText>
           </View>
           <MiniBarChart bars={bars} target={targetKcal} height={84} color={colors.energy} accessibilityLabel={`Daily energy, last ${n} days`} />
-          <BarList rows={macros} />
+          {rows.length > 0 ? (
+            <BarList rows={macroBarRows(targetRows, { danger: colors.danger, success: colors.success })} />
+          ) : (
+            <>
+              <BarList rows={macros} progress={false} />
+              <AppText variant="small" muted>Share of the calories, not progress toward a target.</AppText>
+            </>
+          )}
         </>
       )}
     </Panel>
@@ -507,6 +522,7 @@ export function DesktopDashboard(props: DesktopDashboardProps) {
           range={range}
           onRangeChange={props.onRangeChange}
           targetKcal={energy.targetKcal}
+          rows={rows}
           loading={recent.isLoading}
         />
         <WeightPanel points={weight.points} unitSystem={unitSystem} loading={weight.isLoading} />

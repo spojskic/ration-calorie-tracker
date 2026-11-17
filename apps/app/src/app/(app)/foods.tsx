@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,7 +23,7 @@ import { useFoodRowActions } from '@/components/food/use-food-row-actions';
 import { useFoodSearchResults } from '@/components/food/use-food-search-results';
 import { open, openFood, openRecipe, openSavedMeal } from '@/components/recipes/nav';
 import { RecipeRow, SavedMealRow } from '@/components/recipes/rows';
-import { AppText, Button } from '@/components/ui';
+import { Appear, AppRefreshControl, AppText, Button } from '@/components/ui';
 import {
   errorMessage,
   useFavorites,
@@ -206,10 +205,12 @@ export default function FoodsScreen() {
     </View>
   ) : (
     <View style={styles.centered}>
-      <AppText muted style={styles.emptyText}>
-        {emptyInfo.text}
-      </AppText>
-      <Button label={emptyInfo.action.label} onPress={emptyInfo.action.onPress} />
+      <Appear offsetY={0} scaleFrom={0.97} duration={250}>
+        <AppText muted style={styles.emptyText}>
+          {emptyInfo.text}
+        </AppText>
+        <Button label={emptyInfo.action.label} onPress={emptyInfo.action.onPress} />
+      </Appear>
     </View>
   );
 
@@ -271,7 +272,7 @@ export default function FoodsScreen() {
               contentContainerStyle={styles.wideListContent}
               ListEmptyComponent={listEmpty}
               keyboardShouldPersistTaps="handled"
-              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+              refreshControl={<AppRefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
               renderItem={renderItem}
             />
           }
@@ -292,7 +293,7 @@ export default function FoodsScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          <AppRefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         renderItem={renderItem}
       />

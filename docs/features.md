@@ -121,7 +121,8 @@ Phones keep their single column; nothing on the phone changes.
   *Deficit* / *Surplus* (follows the Target / Balance switch), *Protein*, *Carbs* (or *Net Carbs*), *Fat* (each with "of target" and
   a thin progress strip) and *Logging streak* (the last seven days as markers). Under it the panels sit in 3 columns from a content
   width of ~1120 px (a 1440 px window), 2 from ~760 px, 1 below: **Today** (the three energy rings, the macro bars as label / bar /
-  value columns, *Open diary*), **Consumed average** (7d / 14d / 30d, the daily bars and the protein / carbs / fat shares), **Weight
+  value columns, *Open diary*), **Consumed average** (7d / 14d / 30d, the daily bars and protein / carbs / fat **against the macro
+  targets**, with the share of calories in the accessibility label), **Weight
   trend** (latest weight, the 30-day change, the chart and start / lowest / highest / weigh-ins, *Log weight*), **Recent workouts**
   (the latest five, *All workouts*), **Nutrition score** and **Highlighted nutrients**. With a working AI key a slim **Coach** panel
   with *Open coach* closes the page. Panels of one row have the same height and the last row always fills the width.

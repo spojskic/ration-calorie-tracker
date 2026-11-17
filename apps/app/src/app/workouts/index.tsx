@@ -1,6 +1,6 @@
 import { router, Stack, type Href } from 'expo-router';
 import { useMemo, useState, type ReactElement } from 'react';
-import { ActivityIndicator, FlatList, Platform, RefreshControl, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, Platform, StyleSheet, View } from 'react-native';
 
 import { ChipRow } from '@/components/workouts/FilterChips';
 import { flattenSections, groupWorkouts, type ListItem } from '@/components/workouts/groups';
@@ -8,7 +8,7 @@ import { KIND_LABELS, availableKinds, filterByKind, type WorkoutKind } from '@/c
 import { sourceFilters, type SourceFilter } from '@/components/workouts/format';
 import { WorkoutListRow } from '@/components/workouts/WorkoutListRow';
 import { workoutHref } from '@/components/workouts/links';
-import { AppText, Button } from '@/components/ui';
+import { AppRefreshControl, AppText, Button } from '@/components/ui';
 import { useWorkouts, type WorkoutRow } from '@/data/workouts';
 import { todayLocal } from '@/health/dates';
 import { MAX_CONTENT_WIDTH, spacing, useTheme } from '@/theme';
@@ -100,7 +100,9 @@ export default function WorkoutsScreen() {
           if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
         }}
         onEndReachedThreshold={0.6}
-        refreshControl={<RefreshControl refreshing={query.isRefetching && !query.isFetchingNextPage} onRefresh={() => void query.refetch()} tintColor={colors.primary} />}
+        refreshControl={
+          <AppRefreshControl refreshing={query.isRefetching && !query.isFetchingNextPage} onRefresh={() => void query.refetch()} />
+        }
         contentContainerStyle={styles.content}
       />
     </View>
