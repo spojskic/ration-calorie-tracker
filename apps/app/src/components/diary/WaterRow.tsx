@@ -28,22 +28,21 @@ export function WaterRow({
   const fraction = target > 0 ? value / target : 0;
   const reached = fraction >= 1;
 
+  // Two sibling pressables, not a nested pair: react-native-web renders Pressable as <button>, and a
+  // <button> inside a <button> is invalid DOM (it also trips axe's nested-interactive rule).
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Open water logging"
-      onPress={onOpen}
-      style={({ pressed }) => [
-        styles.row,
-        { borderBottomColor: colors.border, backgroundColor: colors.background },
-        pressed && { opacity: pressedDip(pressed).opacity },
-      ]}>
-      <View
-        accessible
-        accessibilityRole="progressbar"
-        accessibilityLabel={`Water ${formatNumber(value)} of ${formatNumber(target)} millilitres`}
-        accessibilityValue={{ min: 0, max: 100, now: Math.min(100, Math.round(fraction * 100)) }}
-        style={styles.info}>
+    <View
+      style={[styles.row, { borderBottomColor: colors.border, backgroundColor: colors.background }]}> 
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Open water logging"
+        onPress={onOpen}
+        style={({ pressed }) => [styles.info, pressed && { opacity: pressedDip(pressed).opacity }]}>
+        <View
+          accessible
+          accessibilityRole="progressbar"
+          accessibilityLabel={`Water ${formatNumber(value)} of ${formatNumber(target)} millilitres`}
+          accessibilityValue={{ min: 0, max: 100, now: Math.min(100, Math.round(fraction * 100)) }}>
         <View style={styles.line}>
           <AppText style={{ fontWeight: '700' }}>Water</AppText>
           <AppText variant="small" muted>
@@ -59,7 +58,8 @@ export function WaterRow({
             }}
           />
         </View>
-      </View>
+        </View>
+      </Pressable>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Add ${QUICK_WATER_ML} millilitres of water`}
@@ -70,7 +70,7 @@ export function WaterRow({
         ]}>
         <AppText style={{ fontSize: 13, fontWeight: '700', color: colors.primary }}>+ {QUICK_WATER_ML} ml</AppText>
       </Pressable>
-    </Pressable>
+    </View>
   );
 }
 
