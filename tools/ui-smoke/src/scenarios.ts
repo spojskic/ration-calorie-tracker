@@ -1550,6 +1550,16 @@ export const SCENARIOS: Scenario[] = [
     expect: ['Foods', 'Favorites'],
     async after(page, ctx) {
       if (!ctx.isPhone) await checkDesktopFoods(page, ctx);
+      if (ctx.isPhone) {
+        // The five tabs used to scroll sideways and cut "Saved meals" off at the right edge of a 390 px phone.
+        await ctx.check('every library tab fits on a phone (the chip row wraps instead of scrolling)', async () => {
+          const box = await boxOf(page.getByRole('tab', { name: 'Saved meals', exact: true }), 'the "Saved meals" tab');
+          const width = page.viewportSize()?.width ?? 0;
+          if (box.x + box.width > width) {
+            throw new Error(`the "Saved meals" tab ends at ${Math.round(box.x + box.width)}px, past the ${width}px window`);
+          }
+        });
+      }
       const tabs: [string, string][] = [
         ['Favorites', 'Chicken breast, skinless, boneless, raw'],
         ['Recent', 'Oats, rolled, dry'],

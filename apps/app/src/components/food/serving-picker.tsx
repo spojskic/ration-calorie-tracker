@@ -112,7 +112,7 @@ export function ServingPicker({
                 <Text
                   numberOfLines={1}
                   style={[styles.chipText, { color: selected ? colors.onPrimary : colors.text }]}>
-                  {o.label}
+                  {o.displayLabel ?? o.label}
                 </Text>
               </Pressable>
             );

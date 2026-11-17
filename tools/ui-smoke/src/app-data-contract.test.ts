@@ -226,6 +226,36 @@ suite('apps/app data layer against the mock backend', () => {
     expect(isGramOption({ key: 'oz', label: 'oz', gramsPerUnit: 28.35 })).toBe(false);
   });
 
+  it('components/food/serving.ts buildServingOptions: units behind one label carry their grams, exact doubles are dropped', async () => {
+    const { buildServingOptions } = await load('@/components/food/serving');
+    const portion = (id: string, unitLabel: string, gramsPerUnit: number): any => ({
+      id,
+      label: unitLabel,
+      unitLabel,
+      amount: 1,
+      unit: null,
+      rowGrams: gramsPerUnit,
+      gramsPerUnit,
+      defaultAmount: 1,
+      sortOrder: 0,
+    });
+    // "1/2 cup" (80 g per cup) and "1 cup" (81 g per cup) both keep only the unit word; the two "slice" rows are one
+    // unit twice.
+    const options = buildServingOptions(
+      [portion('a', 'cup', 80), portion('b', 'cup', 81), portion('c', 'slice', 30), portion('d', 'slice', 30)],
+      null,
+    );
+    expect(options.map((o: any) => `${o.label} | ${o.displayLabel ?? o.label}`)).toEqual([
+      'cup | cup \u00B7 80 g',
+      'cup | cup \u00B7 81 g',
+      'slice | slice',
+      'g | g',
+      'oz | oz',
+    ]);
+    // The stored label is untouched: an entry logged as "cup" still matches its unit when it is edited.
+    expect(options[0].label).toBe('cup');
+  });
+
   it('lib/uuid.ts: only canonical uuids are sent to the database', async () => {
     const { isUuid } = await load('@/lib/uuid');
     expect(isUuid('70d7298e-57b3-4137-ae26-eed81ab766fd')).toBe(true);

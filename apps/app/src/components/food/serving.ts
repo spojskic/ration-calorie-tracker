@@ -13,6 +13,38 @@ export interface ServingOption {
   kind: 'portion' | 'mass' | 'volume';
   /** Amount prefilled when the user picks this unit without typing a number first. */
   defaultAmount: number;
+  /**
+   * What a chip prints when it is not the same as `label`. Only set for units whose label another unit of the
+   * same row shares: the per-unit grams then tell them apart ("cup · 81 g" next to "cup · 40 g").
+   */
+  displayLabel?: string;
+}
+
+/** Labels are one when they differ only in case or surrounding space ("Cup", "cup "). */
+const labelKey = (label: string): string => label.trim().toLowerCase();
+
+/** Grams that print the same are the same unit (portion rows carry float grams). */
+const sameGrams = (a: number, b: number): boolean => Math.abs(a - b) < 0.01;
+
+/**
+ * Cleans up one row of units, which can carry two problems:
+ *  - the same unit twice (same label AND same grams - a "1 cup" and a "cup" portion row): only the first stays,
+ *  - two DIFFERENT units behind one label. "1/2 cup" and "1 cup" both strip to "cup" (portionUnitLabel in
+ *    data/foods keeps only the unit word), and one row of two identical "cup" chips silently halves or doubles a
+ *    recipe ingredient. Those chips get their per-unit grams ("cup · 40 g", "cup · 81 g").
+ *
+ * `label` itself stays as it is: it is what the diary stores as `portionLabel` and what the edit sheet matches on.
+ */
+function nameUnits(options: ServingOption[]): ServingOption[] {
+  const unique = options.filter(
+    (o, i) =>
+      options.findIndex((other) => labelKey(other.label) === labelKey(o.label) && sameGrams(other.gramsPerUnit, o.gramsPerUnit)) === i,
+  );
+  return unique.map((o) =>
+    unique.filter((other) => labelKey(other.label) === labelKey(o.label)).length > 1
+      ? { ...o, displayLabel: `${o.label} \u00B7 ${trimNumber(o.gramsPerUnit, 1)} g` }
+      : o,
+  );
 }
 
 /**
@@ -58,7 +90,7 @@ export function buildServingOptions(
       });
     }
   }
-  return options;
+  return nameUnits(options);
 }
 
 /** True for the gram option (the synthetic 'g' one, or a portion that is literally 1 g). */
