@@ -1726,15 +1726,15 @@ export function buildFixtures(variant: FixtureVariant = 'default'): FixtureSet {
   // have NO max length (only a non-empty check), diary notes have none either - so long-but-believable it is.
   if (variant === 'worst') {
     const WORST_FOOD_NAMES: Record<string, string> = {
-      chickenCooked:
+      [String(IDS.food.chickenCooked)]:
         'Chicken breast, boneless, skinless, raw — added up to 22% of a solution of retained water, broth or broth solids, flavoring',
-      tomato: 'Bánh mì que ruốc, hàng phố',
-      apple: '🥑 Avocado, organic Hass, small',
-      coffee: 'Øl',
-      cevapi: 'Kobasica - domaća, sušena',
+      [String(IDS.food.tomato)]: 'Bánh mì que ruốc, hàng phố',
+      [String(IDS.food.apple)]: '🥑 Avocado, organic Hass, small',
+      [String(IDS.food.coffee)]: 'Øl',
+      [String(IDS.food.cevapi)]: 'Kobasica - domaća, sušena',
     };
     for (const f of tables.foods ?? []) {
-      const worst = WORST_FOOD_NAMES[String(f.name)];
+      const worst = WORST_FOOD_NAMES[String(f.id)];
       if (worst) f.name = worst;
     }
     // Exactly one favorite: the "1 favorites" count and a lone empty-state escape.
@@ -1765,12 +1765,12 @@ export function buildFixtures(variant: FixtureVariant = 'default'): FixtureSet {
       carl: { name: '🧑‍🍳 Chef Carlo', email: 'carlo@northwind-industries-holdings.example.com' },
     };
     for (const p of tables.profiles ?? []) {
-      const worst = WORST_PEOPLE[String(p.user_id)];
-      if (worst) p.display_name = worst.name;
+      const key = FRIEND_KEYS.find((k) => FRIEND_USERS[k].id === p.user_id);
+      if (key) p.display_name = WORST_PEOPLE[key]!.name;
     }
     for (const u of users) {
-      const worst = WORST_PEOPLE[FRIEND_KEYS.find((k) => FRIEND_USERS[k].id === u.id) ?? ''];
-      if (worst) u.email = worst.email;
+      const key = FRIEND_KEYS.find((k) => FRIEND_USERS[k].id === u.id);
+      if (key) u.email = WORST_PEOPLE[key]!.email;
     }
   }
 

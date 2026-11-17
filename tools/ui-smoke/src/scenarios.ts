@@ -796,6 +796,27 @@ export const SCENARIOS: Scenario[] = [
   },
   { name: 'dashboard: imperial units', route: '/', path: '/', auth: 'signed-in', fixtures: 'imperial', expect: ['Dashboard'] },
   { name: 'dashboard: empty diary', route: '/', path: '/', auth: 'signed-in', fixtures: 'empty-diary', expect: ['Dashboard'] },
+
+  // Worst-case data (the 'worst' fixture variant): long/diacritic/emoji/short names, a huge logged amount,
+  // exactly one favorite, friends with long names and e-mails. Assertions stay minimal on purpose - this
+  // exists to be LOOKED at (phone + desktop screenshots) for layout breaks.
+  { name: 'worst case: dashboard', route: '/', path: '/', auth: 'signed-in', fixtures: 'worst', expect: ['Dashboard'] },
+  {
+    name: 'worst case: diary',
+    route: '/diary',
+    path: '/diary',
+    auth: 'signed-in',
+    fixtures: 'worst',
+    expect: ['Diary'],
+  },
+  {
+    name: 'worst case: foods favorites',
+    route: '/foods',
+    path: '/foods',
+    auth: 'signed-in',
+    fixtures: 'worst',
+    expect: ['Foods'],
+  },
   {
     // The same rings in the diary (the Energy page of the targets on phones, the Energy summary panel on wide screens).
     name: 'diary: the energy summary switches between Target and Balance',
