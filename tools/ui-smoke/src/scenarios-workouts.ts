@@ -7,7 +7,7 @@
  * without any details. The web build never reads Garmin (no tokens in a browser), so the details screens show what is stored.
  * No AI key is set up, so "Discuss with coach" must not be offered anywhere.
  */
-import type { Page } from 'playwright-core';
+import type { Locator, Page } from 'playwright-core';
 
 import { clickButton } from './actions';
 import { IDS } from './fixtures';
@@ -18,6 +18,20 @@ const W = IDS.workout;
 /** Runs an interaction; runs the follow-up assertions only when the interaction worked. */
 async function stepThen(ctx: ScenarioContext, label: string, act: () => Promise<unknown>, then: () => Promise<unknown>): Promise<void> {
   if (await ctx.step(label, act)) await then();
+}
+
+/** Box of an element; throws when it is not on screen (the message names it). */
+async function boxOf(locator: Locator, what: string): Promise<{ x: number; y: number; width: number; height: number }> {
+  const box = await locator.boundingBox({ timeout: 6000 });
+  if (!box) throw new Error(`${what} is not visible`);
+  return box;
+}
+
+/** FAIL when the element reaches past the right edge of the window (a horizontally scrolled row nobody scrolls). */
+async function expectInsideWindow(page: Page, locator: Locator, what: string): Promise<void> {
+  const box = await boxOf(locator, what);
+  const width = page.viewportSize()?.width ?? 0;
+  if (box.x + box.width > width) throw new Error(`${what} ends at ${Math.round(box.x + box.width)}px, past the ${width}px window`);
 }
 
 /** Number of buttons with this accessible name (a string is an exact name). */
@@ -94,6 +108,12 @@ export const WORKOUT_SCENARIOS: Scenario[] = [
         if (!first.includes('details->avgHr')) throw new Error(`the list query is "${first}"`);
       });
 
+      // The filter rows used to scroll sideways and cut the last source ("Manual") off at the right edge of a 390 px phone.
+      if (ctx.isPhone) {
+        await ctx.check('the filter chips wrap: the last source chip is inside the window', () =>
+          expectInsideWindow(page, page.getByRole('button', { name: 'Manual', exact: true }), 'the "Manual" filter chip'));
+      }
+
       await stepThen(ctx, 'filter: Garmin', () => clickButton(page, 'Garmin', { exact: true }), async () => {
         await ctx.expectText('Morning run');
         await ctx.expectText('Evening ride');
@@ -127,6 +147,26 @@ export const WORKOUT_SCENARIOS: Scenario[] = [
         await ctx.expectUrl(new RegExp(`/workouts/${W.garminStrength}`));
         await ctx.expectText('Time in heart-rate zones');
       });
+    },
+  },
+  {
+    // The empty state explains the button in full; with history listed the screen must not dead-end, so the same action
+    // lives in the page header (a named action in the desktop strip, the round + of the phone header).
+    name: 'workouts: the header logs a workout once the list has history',
+    route: '/workouts',
+    path: '/workouts',
+    auth: 'signed-in',
+    expect: ['This week'],
+    async after(page, ctx) {
+      const log = page.getByRole('button', { name: 'Log workout', exact: true });
+      await ctx.check('the header offers "Log workout" next to the filters', async () => {
+        if ((await log.count()) !== 1) throw new Error(`${await log.count()} "Log workout" buttons`);
+      });
+      if (ctx.isPhone) {
+        await ctx.check('the header action is inside the window', () => expectInsideWindow(page, log, 'the "Log workout" button'));
+      }
+      await stepThen(ctx, 'open the workout form from the header', () => clickButton(page, 'Log workout', { exact: true }), () =>
+        ctx.expectUrl(/\/exercise\/new/));
     },
   },
   {
