@@ -196,7 +196,7 @@ export function CollapsibleHeader({
       onPress={onToggle}
       style={({ pressed }) => [styles.collapsible, pressedDip(pressed)]}>
       <AppText variant="body" style={[styles.bold, styles.flex]}>{label}</AppText>
-      <AppText variant="small" style={{ color: colors.accent, fontWeight: '700' }}>{open ? 'Hide' : 'Show'}</AppText>
+      <AppText variant="small" style={{ color: colors.accentText, fontWeight: '700' }}>{open ? 'Hide' : 'Show'}</AppText>
     </Pressable>
   );
 }

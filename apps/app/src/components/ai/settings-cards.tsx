@@ -322,7 +322,7 @@ export function ConnectCard() {
 
 function LinkText({ children }: { children: string }) {
   const { colors } = useTheme();
-  return <Text style={[styles.link, { color: colors.accent }]}>{children}</Text>;
+  return <Text style={[styles.link, { color: colors.accentText }]}>{children}</Text>;
 }
 
 // ---------------------------------------------------------------------------------------------------------------

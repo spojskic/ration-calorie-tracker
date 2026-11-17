@@ -29,7 +29,7 @@ export function RefusalCard({ text, category }: { text: string; category: Refusa
           size={20}
           tintColor={colors.accent}
         />
-        <AppText variant="small" style={[styles.title, { color: colors.accent }]}>
+        <AppText variant="small" style={[styles.title, { color: colors.accentText }]}>
           {title}
         </AppText>
       </View>

@@ -72,7 +72,7 @@ export default function ResetPasswordScreen() {
               accessibilityRole="button"
               onPress={() => router.replace('/sign-in')}
               style={({ pressed }) => [styles.backLink, { opacity: pressed ? 0.7 : 1 }]}>
-              <AppText variant="small" style={{ color: colors.accent, fontWeight: '700', textDecorationLine: 'underline' }}>
+              <AppText variant="small" style={{ color: colors.accentText, fontWeight: '700', textDecorationLine: 'underline' }}>
                 Back to sign in
               </AppText>
             </Pressable>

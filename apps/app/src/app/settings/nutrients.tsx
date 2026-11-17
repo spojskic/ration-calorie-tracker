@@ -219,7 +219,7 @@ function NutrientRow({
       </View>
       {target ? <Badge label={KIND_LABEL[target.kind]} tone={target.kind === 'CUSTOM' ? 'primary' : 'neutral'} /> : null}
       {editable ? (
-        <AppText variant="small" style={{ color: colors.accent, fontWeight: '700' }}>{editing ? 'Close' : 'Edit'}</AppText>
+        <AppText variant="small" style={{ color: colors.accentText, fontWeight: '700' }}>{editing ? 'Close' : 'Edit'}</AppText>
       ) : null}
     </View>
   );

@@ -34,7 +34,7 @@ export function AmountWarningNote({
             styles.warningButton,
             { borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.pill, opacity: pressed ? 0.7 : 1 },
           ]}>
-          <AppText variant="small" style={{ fontWeight: '700', color: colors.accent }}>
+          <AppText variant="small" style={{ fontWeight: '700', color: colors.accentText }}>
             {`Use ${trimNumber(warning.gramsAlternative, 2)} g`}
           </AppText>
         </Pressable>

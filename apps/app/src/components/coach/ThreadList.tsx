@@ -162,7 +162,7 @@ export function ThreadList({
           accessibilityRole="link"
           onPress={() => router.push(AI_SETTINGS)}
           hitSlop={6}>
-          <AppText variant="small" style={{ color: colors.accent, fontWeight: '700' }}>
+          <AppText variant="small" style={{ color: colors.accentText, fontWeight: '700' }}>
             Change in Settings &gt; AI
           </AppText>
         </Pressable>

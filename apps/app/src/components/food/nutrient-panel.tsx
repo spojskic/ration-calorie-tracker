@@ -143,7 +143,7 @@ export function NutrientPanel({
           accessibilityRole="button"
           onPress={() => setShowAll((v) => !v)}
           style={[styles.toggle, { borderColor: colors.border, borderRadius: radius.pill }]}>
-          <AppText variant="small" style={{ fontWeight: '700', color: colors.accent }}>
+          <AppText variant="small" style={{ fontWeight: '700', color: colors.accentText }}>
             {showAll ? 'Hide nutrients without data' : `Show ${hiddenCount} nutrients without data`}
           </AppText>
         </Pressable>
