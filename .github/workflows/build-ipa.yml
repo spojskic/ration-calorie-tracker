@@ -1,0 +1,96 @@
+# Builds the UNSIGNED iOS IPA on a GitHub macOS runner and uploads it as a workflow ARTIFACT -
+# no tag, no version bump, no draft release. Use it to try a build before making a real release
+# ("Release" -> Run workflow); artifacts live on the run page for 90 days.
+#
+# The packaging is identical to the ipa job in release.yml: unsigned archive
+# (CODE_SIGNING_ALLOWED=NO) repackaged as Payload/*.app -> .ipa, re-sign with
+# AltStore/Sideloadly; no Apple Developer account or signing secrets needed. Free on public
+# repos: macOS runners cost nothing there.
+name: Build IPA
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-ipa
+  cancel-in-progress: true
+
+env:
+  EXPO_NO_TELEMETRY: '1'
+
+jobs:
+  ipa:
+    name: Build the unsigned IPA
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Write apps/app/.env from the repo secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          # Same shape checks as the release jobs: secrets are write-only, and the iOS build bakes them in too.
+          if [[ ! "$SUPABASE_URL" =~ ^https://[a-z0-9]+\.supabase\.co/?$ ]]; then
+            echo "::error::The SUPABASE_URL repo secret does not look like a Supabase project URL (expected https://<ref>.supabase.co)"
+            exit 1
+          fi
+          if [[ ! "$SUPABASE_ANON_KEY" =~ ^(eyJ|sb_publishable_) ]]; then
+            echo "::error::The SUPABASE_ANON_KEY repo secret is neither a legacy anon JWT (eyJ...) nor a new-style publishable key (sb_publishable_...)"
+            exit 1
+          fi
+          printf 'EXPO_PUBLIC_SUPABASE_URL=%s\nEXPO_PUBLIC_SUPABASE_ANON_KEY=%s\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > apps/app/.env
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate the native iOS project
+        run: npx expo prebuild --platform ios --clean
+        working-directory: apps/app
+
+      # Unsigned archive: no certificates, no secrets. Repackaged as Payload/*.app -> .ipa below.
+      - name: Archive the app (unsigned)
+        working-directory: apps/app/ios
+        run: |
+          set -euo pipefail
+          WS=$(find . -maxdepth 1 -name "*.xcworkspace" | head -n 1)
+          PROJ=$(find . -maxdepth 1 -name "*.xcodeproj" | head -n 1)
+          if [ -n "$WS" ]; then
+            SOURCE=(-workspace "$WS")
+          else
+            SOURCE=(-project "$PROJ")
+          fi
+          SCHEME=$(basename "${WS:-$PROJ}" | sed 's/\.[^.]*$//')
+          echo "Archiving scheme $SCHEME from ${WS:-$PROJ}"
+          xcodebuild archive \
+            "${SOURCE[@]}" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Ration.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package the unsigned IPA
+        working-directory: apps/app/ios
+        run: |
+          set -euo pipefail
+          APP=$(find build/Ration.xcarchive/Products/Applications -maxdepth 1 -name "*.app")
+          mkdir Payload
+          cp -R "$APP" Payload/
+          zip -qry "Ration-unsigned.ipa" Payload
+
+      - name: Upload the IPA as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ration-unsigned.ipa
+          path: apps/app/ios/Ration-unsigned.ipa
