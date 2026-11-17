@@ -137,6 +137,7 @@ export function AverageCard({
                 <AppText style={styles.macroPct}>{Math.round(m.pct)}%</AppText>
               </View>
             ))}
+            <AppText variant="small" muted>Share of the calories, not progress toward a target.</AppText>
           </View>
         </>
       )}

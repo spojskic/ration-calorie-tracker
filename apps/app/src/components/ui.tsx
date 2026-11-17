@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import {
+  AccessibilityInfo,
   ActivityIndicator,
   Animated,
   Easing,
@@ -245,4 +246,65 @@ const styles = StyleSheet.create({
 export function AppRefreshControl(props: RefreshControlProps): ReactNode {
   const { colors } = useTheme();
   return <RefreshControl {...props} tintColor={colors.primary} progressBackgroundColor={colors.surface} />;
+}
+
+/**
+ * A one-shot entrance: fades (and optionally slides / scales) its content in on mount. For content that
+ * swaps in place, remount it with `key` — every mount is one entrance. Rare or occasional moments only:
+ * nothing here belongs on surfaces users see dozens of times a day. Reduce-motion renders the content
+ * settled immediately.
+ */
+export function Appear({
+  children,
+  offsetY = 0,
+  scaleFrom = 1,
+  duration = 160,
+}: {
+  children: ReactNode;
+  /** How far (dp) the content starts below its resting place. */
+  offsetY?: number;
+  /** What scale the content starts at (0.95–0.98 for a subtle grow; never 0). */
+  scaleFrom?: number;
+  duration?: number;
+}) {
+  const [t] = useState(() => new Animated.Value(0));
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((on) => {
+        if (!cancelled) setReduceMotion(on);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      t.setValue(1);
+      return;
+    }
+    Animated.timing(t, {
+      toValue: 1,
+      duration,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [t, reduceMotion, duration]);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: t,
+        transform: [
+          { translateY: t.interpolate({ inputRange: [0, 1], outputRange: [offsetY, 0] }) },
+          { scale: t.interpolate({ inputRange: [0, 1], outputRange: [scaleFrom, 1] }) },
+        ],
+      }}>
+      {children}
+    </Animated.View>
+  );
 }

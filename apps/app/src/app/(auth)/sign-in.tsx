@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
 import { TextField } from '@/components/forms';
-import { AppText, Button, Card, Screen } from '@/components/ui';
+import { Appear, AppText, Button, Card, Screen } from '@/components/ui';
 import { createAccount } from '@/data/signup';
 import { useAuth } from '@/lib/auth';
 import { APP_URL } from '@/lib/app-url';
@@ -168,7 +168,9 @@ export default function SignInScreen() {
             Check your inbox — the reset link is on its way to {email.trim()}.
           </AppText>
         ) : null}
-        <View style={styles.form}>
+        {/* Remounting with the mode gives each swap one entrance (Appear); field values live up here, so nothing is lost. */}
+        <Appear key={mode} offsetY={3}>
+          <View style={styles.form}>
           {signingUp ? (
             <>
               <TextField
@@ -275,7 +277,8 @@ export default function SignInScreen() {
               disabled={forgotting ? !email : !ready}
             />
           ) : null}
-        </View>
+          </View>
+        </Appear>
         <View style={styles.switchRow}>
           <AppText variant="small" muted>
             {signingUp ? 'Already have an account?' : forgotting ? 'Remembered it after all?' : 'Have an invite code?'}

@@ -31,7 +31,7 @@ import {
   activityBoost,
   bmrFormulaLabel,
 } from '@/components/settings/options';
-import { CollapsibleHeader, Divider, NavRow, Note } from '@/components/settings/rows';
+import { Collapse, CollapsibleHeader, Divider, NavRow, Note } from '@/components/settings/rows';
 import { SaveRow } from '@/components/settings/save-row';
 import { AppText, Button, Card, Screen } from '@/components/ui';
 import { ENERGY_SUMMARY_MODE_NOTE, ENERGY_SUMMARY_MODE_OPTIONS } from '@/data/energy-mode';
@@ -145,7 +145,9 @@ function TargetsEditor({ targets, goal }: { targets: ResolvedTargets; goal: Weig
               open={showBreakdown}
               onToggle={() => setShowBreakdown((v) => !v)}
             />
-            {showBreakdown ? <EnergyBreakdownTable result={live} unitSystem={unitSystem} /> : null}
+            <Collapse open={showBreakdown}>
+              <EnergyBreakdownTable result={live} unitSystem={unitSystem} />
+            </Collapse>
             <Divider />
             <AppText variant="heading">Set Macro Targets</AppText>
             <MacroEditor
@@ -215,31 +217,29 @@ function TargetsEditor({ targets, goal }: { targets: ResolvedTargets; goal: Weig
           open={showFormula}
           onToggle={() => setShowFormula((v) => !v)}
         />
-        {showFormula ? (
-          <>
-            <OptionList
-              value={energy.bmrFormula}
-              onChange={(bmrFormula) => setEnergyEdit({ ...energy, bmrFormula })}
-              options={BMR_FORMULA_OPTIONS.map((o) => ({
-                value: o.value,
-                label: o.label,
-                description: o.description,
-                disabled: o.needsBodyFat && bodyFatPct === null,
-                disabledReason: 'Needs a body fat percentage. Log one under Personal details.',
-              }))}
+        <Collapse open={showFormula}>
+          <OptionList
+            value={energy.bmrFormula}
+            onChange={(bmrFormula) => setEnergyEdit({ ...energy, bmrFormula })}
+            options={BMR_FORMULA_OPTIONS.map((o) => ({
+              value: o.value,
+              label: o.label,
+              description: o.description,
+              disabled: o.needsBodyFat && bodyFatPct === null,
+              disabledReason: 'Needs a body fat percentage. Log one under Personal details.',
+            }))}
+          />
+          {energy.bmrFormula === 'manual' ? (
+            <NumberField
+              label="Resting energy (BMR)"
+              unit="kcal/day"
+              value={energy.manualBmr}
+              onChange={(manualBmr) => setEnergyEdit({ ...energy, manualBmr })}
+              error={energy.manualBmr.trim() !== '' ? manualBmr.error : null}
+              hint="Without a valid value Mifflin-St Jeor is used."
             />
-            {energy.bmrFormula === 'manual' ? (
-              <NumberField
-                label="Resting energy (BMR)"
-                unit="kcal/day"
-                value={energy.manualBmr}
-                onChange={(manualBmr) => setEnergyEdit({ ...energy, manualBmr })}
-                error={energy.manualBmr.trim() !== '' ? manualBmr.error : null}
-                hint="Without a valid value Mifflin-St Jeor is used."
-              />
-            ) : null}
-          </>
-        ) : null}
+          ) : null}
+        </Collapse>
         {effectiveFormulaDiffers && live ? (
           <Note tone="warning">{`Currently calculating with ${bmrFormulaLabel(live.bmrFormula)} because the selected formula has no data to work with.`}</Note>
         ) : null}

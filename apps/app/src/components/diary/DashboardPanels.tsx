@@ -275,7 +275,8 @@ function AveragePanel({
             </AppText>
           </View>
           <MiniBarChart bars={bars} target={targetKcal} height={84} color={colors.energy} accessibilityLabel={`Daily energy, last ${n} days`} />
-          <BarList rows={macros} />
+          <BarList rows={macros} progress={false} />
+          <AppText variant="small" muted>Share of the calories, not progress toward a target.</AppText>
         </>
       )}
     </Panel>

@@ -1,6 +1,6 @@
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState, type ReactNode } from 'react';
+import { AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { pressedDip } from '@/components/press';
 import { AppText } from '@/components/ui';
@@ -194,10 +194,64 @@ export function CollapsibleHeader({
       accessibilityLabel={label}
       accessibilityState={{ expanded: open }}
       onPress={onToggle}
-      style={({ pressed }) => [styles.collapsible, { opacity: pressed ? 0.7 : 1 }]}>
+      style={({ pressed }) => [styles.collapsible, pressedDip(pressed)]}>
       <AppText variant="body" style={[styles.bold, styles.flex]}>{label}</AppText>
       <AppText variant="small" style={{ color: colors.accent, fontWeight: '700' }}>{open ? 'Hide' : 'Show'}</AppText>
     </Pressable>
+  );
+}
+
+/**
+ * The animated half of a collapsible section: wraps the content under a `CollapsibleHeader` instead of
+ * rendering it conditionally, so opening and closing bridges the change instead of teleporting it. The
+ * content stays mounted (so it keeps state and reports its natural height), the container clips it with an
+ * animated height. JS-driven (heights cannot use the native driver) — settings screens only.
+ */
+export function Collapse({ open, children }: { open: boolean; children: ReactNode }) {
+  const [progress] = useState(() => new Animated.Value(open ? 1 : 0));
+  const [naturalHeight, setNaturalHeight] = useState(0);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((on) => {
+        if (!cancelled) setReduceMotion(on);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      progress.setValue(open ? 1 : 0);
+      return;
+    }
+    Animated.timing(progress, {
+      toValue: open ? 1 : 0,
+      duration: open ? 220 : 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [open, progress, reduceMotion]);
+
+  return (
+    <Animated.View
+      pointerEvents={open ? 'auto' : 'none'}
+      accessibilityElementsHidden={!open}
+      importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
+      style={{
+        overflow: 'hidden',
+        opacity: progress,
+        height:
+          naturalHeight > 0
+            ? progress.interpolate({ inputRange: [0, 1], outputRange: [0, naturalHeight] })
+            : undefined,
+      }}>
+      <View onLayout={(e) => setNaturalHeight(e.nativeEvent.layout.height)}>{children}</View>
+    </Animated.View>
   );
 }
 

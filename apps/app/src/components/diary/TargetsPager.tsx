@@ -12,6 +12,7 @@ import {
 
 import { EnergySummary, type EnergySummaryProps } from '@/components/charts/EnergySummary';
 import { HighlightRings, type HighlightRingItem } from '@/components/charts/HighlightRings';
+import { useAnimatedNumber } from '@/components/charts/use-animated-number';
 import { AppText } from '@/components/ui';
 import { spacing, useTheme, type ThemeColors } from '@/theme';
 
@@ -99,7 +100,19 @@ const toneColor = (tone: PercentTone, colors: ThemeColors): string =>
  */
 function MacroRowBar({ row }: { row: MacroRow }) {
   const { colors, shape } = useTheme();
+  // The bar tweens its value in (the same 280ms driver the rings use), so on dashboard load the bars
+  // fill alongside the rings instead of teleporting to full width. Texts and accessibility read the
+  // real value; only the geometry is animated. reduce-motion renders the settled value immediately.
+  const tweened = useAnimatedNumber(row.value ?? 0);
+  const shownValue = row.value === undefined ? undefined : tweened;
   const p = macroProgress({
+    value: shownValue,
+    target: row.target,
+    unit: row.unit,
+    decimals: row.decimals,
+    overIsBad: row.overIsBad,
+  });
+  const real = macroProgress({
     value: row.value,
     target: row.target,
     unit: row.unit,
@@ -112,8 +125,8 @@ function MacroRowBar({ row }: { row: MacroRow }) {
     <View
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel={`${row.label}: ${p.valueText}${p.pctText ? `, ${p.pctText}` : ''}`}
-      accessibilityValue={p.now === undefined ? undefined : { min: 0, max: 100, now: p.now }}
+      accessibilityLabel={`${row.label}: ${real.valueText}${real.pctText ? `, ${real.pctText}` : ''}`}
+      accessibilityValue={real.now === undefined ? undefined : { min: 0, max: 100, now: real.now }}
       style={styles.macro}>
       <View style={styles.macroLine}>
         <AppText variant="small" numberOfLines={1} style={styles.macroText}>
@@ -122,8 +135,8 @@ function MacroRowBar({ row }: { row: MacroRow }) {
           </AppText>
           <AppText variant="small" muted>{`  ${p.valueText}`}</AppText>
         </AppText>
-        <AppText variant="small" numberOfLines={1} style={[styles.macroPct, { color: toneColor(p.tone, colors) }]}>
-          {p.pctText}
+        <AppText variant="small" numberOfLines={1} style={[styles.macroPct, { color: toneColor(real.tone, colors) }]}>
+          {real.pctText}
         </AppText>
       </View>
       <View style={[styles.track, { backgroundColor: colors.track, borderRadius: shape.bar(MACRO_TRACK_HEIGHT) }]}>
