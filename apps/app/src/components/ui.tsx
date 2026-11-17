@@ -178,13 +178,12 @@ export function Button({
         ]}>
         <Animated.View
           pointerEvents="none"
-          style={[styles.buttonSlot, { opacity: fade, display: loading ? 'flex' : 'none' }]}>
+          style={[styles.buttonSpinnerSlot, { opacity: fade, display: loading ? 'flex' : 'none' }]}>
           <ActivityIndicator color={fg} />
         </Animated.View>
         <Animated.Text
           style={[
             styles.buttonLabel,
-            styles.buttonSlot,
             { color: fg, opacity: fade.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) },
           ]}>
           {label}
@@ -215,18 +214,26 @@ const styles = StyleSheet.create({
   button: {
     minHeight: BUTTON_MIN_HEIGHT,
   },
-  // The animated surface fills the (min-height) button; the label and spinner share one centred slot so the
+  // The animated surface fills the (min-height) button; the spinner overlays the centred label so the
   // crossfade between them never changes the button's height.
   buttonSurface: {
-    flex: 1,
-    alignSelf: 'stretch',
     minHeight: BUTTON_MIN_HEIGHT,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonSlot: { position: 'absolute', width: '100%', alignItems: 'center' },
+  // The spinner is a full-bleed overlay (explicit anchoring: RN and react-native-web agree on this),
+  // centred over the label slot. The label stays in normal flow so it defines the button's height.
+  buttonSpinnerSlot: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   // Centred, so a label that has to wrap (two buttons sharing a row) still sits in the middle of its pill.
   buttonLabel: { fontSize: 15, fontWeight: '700', textAlign: 'center' },
 });
