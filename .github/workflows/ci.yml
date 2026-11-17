@@ -6,6 +6,26 @@ on:
   pull_request:
 
 jobs:
+  # Naming discipline: the PR title and every commit subject must be conventional commits
+  # (`type(scope): subject`) - with squash merges the PR title becomes the commit on main.
+  conventions:
+    name: Conventional commits
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the PR title and every commit subject
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/commits" \
+            --jq '.[].commit.message | split("\n")[0]' \
+          | node .github/check-conventions.mjs "$TITLE"
+
   check:
     runs-on: ubuntu-latest
     steps:
