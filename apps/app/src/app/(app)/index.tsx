@@ -11,7 +11,7 @@ import { ResponsiveGrid } from '@/components/diary/layout';
 import { go } from '@/components/diary/nav';
 import { energySummaryProps } from '@/components/diary/energy-view';
 import { buildMacroRows, consumedSplit, targetSplit } from '@/components/diary/targets-view';
-import { MacroBars } from '@/components/diary/TargetsPager';
+import { MacroBars } from '@/components/diary/MacroBars';
 import { AppRefreshControl, AppText, Button, Card, Screen } from '@/components/ui';
 import { useDayNutrients, useRecentDays } from '@/data/diary';
 import { useDayEnergyFrom } from '@/data/energy';

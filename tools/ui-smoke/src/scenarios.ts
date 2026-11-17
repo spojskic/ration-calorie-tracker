@@ -825,7 +825,8 @@ export const SCENARIOS: Scenario[] = [
     auth: 'signed-in',
     expect: ['Breakfast', 'Lunch', 'Dinner', 'Snacks'],
     async after(page, ctx) {
-      if (ctx.isPhone) await ctx.step('open the Energy page of the targets', () => clickTab(page, /^Energy/));
+      // Phones: the rings live in the targets sheet behind the compact strip; wide screens show the panel.
+      if (ctx.isPhone) await ctx.step('open the targets sheet', () => clickButton(page, /Targets overview/));
       await expectThirdCircle(ctx, page, TARGET_VIEW);
       await stepThen(ctx, 'tap the label under the third circle', () => thirdCircleButton(page).click({ timeout: 6000 }), async () => {
         await expectThirdCircle(ctx, page, BALANCE_VIEW);
@@ -869,8 +870,15 @@ export const SCENARIOS: Scenario[] = [
         },
         () => ctx.expectMutation('diary_entries', 'delete'),
       );
-      await ctx.step('scroll to the nutrient targets', () => scrollToText(page, 'Nutrient Targets'));
-      await ctx.snapshot('nutrient-targets');
+      // Phones: the nutrient panel moved into the targets sheet (one compact strip above the meals);
+      // wide screens keep the panel beside the entries.
+      if (ctx.isPhone) {
+        await ctx.step('open the nutrient targets in the targets sheet', () => clickButton(page, /Targets overview/));
+        await ctx.snapshot('nutrient-targets');
+      } else {
+        await ctx.step('scroll to the nutrient targets', () => scrollToText(page, 'Nutrient Targets'));
+        await ctx.snapshot('nutrient-targets');
+      }
     },
   },
   {

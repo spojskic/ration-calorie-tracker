@@ -6,7 +6,7 @@ import { MiniBarChart, type MiniBar } from '@/components/charts/MiniBarChart';
 import { Sparkline } from '@/components/charts/Sparkline';
 import { formatNumber } from '@/components/charts/format';
 import { Segmented } from '@/components/forms';
-import { MacroBars } from '@/components/diary/TargetsPager';
+import { MacroBars } from '@/components/diary/MacroBars';
 import type { MacroRow } from '@/components/diary/targets-view';
 import { AppText, Button, Card } from '@/components/ui';
 import { averageOfDays, type RecentDay } from '@/data/diary';
