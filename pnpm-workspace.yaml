@@ -6,14 +6,3 @@ packages:
 # pnpm 11 blocks dependency install scripts unless approved here.
 allowBuilds:
   esbuild: true
-  workerd: true
-
-minimumReleaseAgeExclude:
-  - '@cloudflare/workerd-darwin-64@1.20261117.1'
-  - '@cloudflare/workerd-darwin-arm64@1.20261117.1'
-  - '@cloudflare/workerd-linux-64@1.20261117.1'
-  - '@cloudflare/workerd-linux-arm64@1.20261117.1'
-  - '@cloudflare/workerd-windows-64@1.20261117.1'
-  - miniflare@5.20261117.0-beta
-  - workerd@1.20261117.1
-  - wrangler@4.164.0
