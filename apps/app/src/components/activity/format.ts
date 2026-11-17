@@ -1,5 +1,6 @@
 import { mlToFlOz, type UnitSystem } from '@ration/core';
 
+import { formatNumber } from '@/components/charts/format';
 import { fromISODate, todayISO } from '@/state/selected-date';
 
 /** Rounds to `dp` decimals and drops trailing zeros ("2", "2.5"). */
@@ -27,4 +28,17 @@ export function formatShortDate(iso: string): string {
 export function formatVolume(ml: number, system: UnitSystem): string {
   if (system === 'imperial') return `${trimNum(mlToFlOz(ml), 1)} fl oz`;
   return ml >= 1000 ? `${trimNum(ml / 1000, 2)} L` : `${Math.round(ml)} mL`;
+}
+
+/** The volume unit of the user's system as it is printed: "mL" / "fl oz". */
+export function volumeUnit(system: UnitSystem): string {
+  return system === 'imperial' ? 'fl oz' : 'mL';
+}
+
+/**
+ * A water amount as a bare number in the user's unit, for a pair that names the unit once: "1,080 / 3,700 mL",
+ * "36.5 / 125.1 fl oz". `formatVolume` is for a value that stands on its own.
+ */
+export function volumeNumber(ml: number, system: UnitSystem): string {
+  return system === 'imperial' ? trimNum(mlToFlOz(ml), 1) : formatNumber(ml);
 }

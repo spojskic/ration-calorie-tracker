@@ -1023,6 +1023,16 @@ export const SCENARIOS: Scenario[] = [
     },
   },
   {
+    // The water row counts against the configured target (3.7 L) in the user's units: an imperial profile must not read
+    // "ml" here while the water form says fl oz.
+    name: "diary: the water row shows the goal in the user's units",
+    route: '/diary',
+    path: '/diary',
+    auth: 'signed-in',
+    fixtures: 'imperial',
+    expect: ['36.5 / 125.1 fl oz', '+ 8.5 fl oz'],
+  },
+  {
     name: 'diary: add a saved meal to Lunch',
     route: '/diary',
     path: '/diary',
@@ -2212,18 +2222,30 @@ export const SCENARIOS: Scenario[] = [
     },
   },
   {
-    name: 'water: quick amounts, custom amount, undo',
+    name: 'water: quick amounts, custom amount, goal progress, remove with undo',
     route: '/water/new',
     path: '/water/new',
     auth: 'signed-in',
-    expect: ["Today's total", 'Custom amount'],
+    // 250 + 330 + 500 mL already logged today, against the 3.7 L water target of the guide lines.
+    expect: ["Today's total", 'Custom amount', '29% of the 3.7 L goal'],
     async after(page, ctx) {
-      await stepThen(ctx, 'tap 500 mL', () => clickButton(page, /500 mL/), () => ctx.expectMutation('water_entries', 'insert', (m) => payloadOf(m).ml === 500));
+      await stepThen(ctx, 'tap 500 mL', () => clickButton(page, /500 mL/), async () => {
+        await ctx.expectMutation('water_entries', 'insert', (m) => payloadOf(m).ml === 500);
+        await ctx.expectText('43% of the 3.7 L goal');
+      });
       await stepThen(ctx, 'add a custom 400 mL', async () => {
         await fill(page, 'Custom amount (mL)', '400');
         await clickButton(page, 'Add custom amount', { exact: true });
       }, () => ctx.expectMutation('water_entries', 'insert', (m) => payloadOf(m).ml === 400));
-      await stepThen(ctx, 'remove the last entry', () => clickButton(page, 'Remove last', { exact: true }), () => ctx.expectMutation('water_entries', 'delete'));
+      // Removing is a correction, not a second "Done": it is a small destructive text action under the primary button
+      // and it can be undone from the toast, like a deleted diary entry.
+      await stepThen(ctx, 'remove the last entry', () => clickButton(page, 'Remove last entry', { exact: true }), async () => {
+        await ctx.expectMutation('water_entries', 'delete');
+        await ctx.expectText(/Removed .+ of water/);
+        await ctx.snapshot('removed');
+        await stepThen(ctx, 'undo the removal', () => clickButton(page, 'Undo', { exact: true }), () =>
+          ctx.expectMutation('water_entries', 'insert', (m) => Number(payloadOf(m).ml) > 0));
+      });
     },
   },
 
