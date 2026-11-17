@@ -31,9 +31,9 @@ import {
   activityBoost,
   bmrFormulaLabel,
 } from '@/components/settings/options';
-import { Collapse, CollapsibleHeader, Divider, NavRow, Note } from '@/components/settings/rows';
+import { CollapsibleHeader, Divider, NavRow, Note } from '@/components/settings/rows';
 import { SaveRow } from '@/components/settings/save-row';
-import { AppText, Button, Card, Screen } from '@/components/ui';
+import { AppText, Button, Card, Collapse, Screen } from '@/components/ui';
 import { ENERGY_SUMMARY_MODE_NOTE, ENERGY_SUMMARY_MODE_OPTIONS } from '@/data/energy-mode';
 import { useActiveWeightGoal, useSaveMacroTarget, useSaveWeightGoal, type WeightGoal } from '@/data/goals';
 import { useProfile, useUpdateProfile } from '@/data/profile';
@@ -250,13 +250,13 @@ function TargetsEditor({ targets, goal }: { targets: ResolvedTargets; goal: Weig
           open={showMode}
           onToggle={() => setShowMode((v) => !v)}
         />
-        {showMode ? (
+        <Collapse open={showMode}>
           <OptionList
             value={energy.energyMode}
             onChange={(energyMode) => setEnergyEdit({ ...energy, energyMode })}
             options={ENERGY_MODE_OPTIONS.map((o) => ({ value: o.value, label: o.label, description: o.description }))}
           />
-        ) : null}
+        </Collapse>
 
         <Divider />
         <Segmented

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactElement, type ReactNode } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
@@ -74,6 +74,7 @@ export function Screen({
   scroll = true,
   safeTop = false,
   maxWidth,
+  refreshControl,
 }: {
   children: ReactNode;
   title?: string;
@@ -82,6 +83,8 @@ export function Screen({
   safeTop?: boolean;
   /** Widest the content may get on a large screen (default: MAX_CONTENT_WIDTH). For pages that lay out columns. */
   maxWidth?: number;
+  /** Pull-to-refresh: pass an AppRefreshControl. Data-backed list pages get one; forms and action screens do not. */
+  refreshControl?: ReactElement;
 }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -94,7 +97,12 @@ export function Screen({
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: safeTop ? insets.top : 0 }]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">{content}</ScrollView>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={refreshControl}>
+          {content}
+        </ScrollView>
       ) : (
         content
       )}
@@ -238,6 +246,70 @@ const styles = StyleSheet.create({
   // Centred, so a label that has to wrap (two buttons sharing a row) still sits in the middle of its pill.
   buttonLabel: { fontSize: 15, fontWeight: '700', textAlign: 'center' },
 });
+
+/**
+ * The animated half of a collapsible section: wraps the content under a collapse header (CollapsibleHeader
+ * in settings, MealGroupSection in the diary, the food-form and recipe editors, …) instead of rendering it
+ * conditionally, so opening and closing bridges the change instead of teleporting it. While the section is
+ * closed the content is fully unmounted — the pre-animation semantics (screenshots, assertions, memory) —
+ * and the last measured height re-plays when it opens again. JS-driven (heights cannot use the native driver).
+ */
+export function Collapse({ open, children }: { open: boolean; children: ReactNode }) {
+  const [progress] = useState(() => new Animated.Value(open ? 1 : 0));
+  const [mounted, setMounted] = useState(open);
+  const [height, setHeight] = useState<number | null>(null);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((on) => {
+        if (!cancelled) setReduceMotion(on);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    // The content exists while the progress is above zero: opening mounts it on the first animation frame,
+    // the completed close unmounts it when the value reaches zero.
+    const id = progress.addListener(({ value: v }) => setMounted(v > 0));
+    return () => progress.removeListener(id);
+  }, [progress]);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      progress.setValue(open ? 1 : 0);
+      return;
+    }
+    Animated.timing(progress, {
+      toValue: open ? 1 : 0,
+      duration: open ? 220 : 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start(({ finished }) => {
+      if (finished && !open) setMounted(false);
+    });
+  }, [open, progress, reduceMotion]);
+
+  if (!mounted) return null;
+
+  return (
+    <Animated.View
+      style={{
+        overflow: 'hidden',
+        opacity: progress,
+        height:
+          height !== null
+            ? progress.interpolate({ inputRange: [0, 1], outputRange: [0, height] })
+            : undefined,
+      }}>
+      <View onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>{children}</View>
+    </Animated.View>
+  );
+}
 
 /**
  * The app's RefreshControl: one place for the platform details (Android needs a coloured spinner track,

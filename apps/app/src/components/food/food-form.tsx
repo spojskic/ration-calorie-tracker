@@ -16,7 +16,7 @@ import { validateBarcode } from '@/data/foods';
 import { MAX_CONTENT_WIDTH, spacing, useTheme } from '@/theme';
 
 import { NumberField, Segmented, SwitchRow, TextField, WarningHint } from '../forms';
-import { AppText, Button, Card } from '../ui';
+import { AppText, Button, Card, Collapse } from '../ui';
 import { UNIT_LABEL, formatAmount, trimNumber } from './format';
 
 export interface FoodFormInitial {
@@ -577,7 +577,9 @@ function Collapsible({
         </View>
         <AppText muted>{open ? '\u25BE' : '\u25B8'}</AppText>
       </Pressable>
-      {open ? <View style={styles.collapsibleBody}>{children}</View> : null}
+      <Collapse open={open}>
+        <View style={styles.collapsibleBody}>{children}</View>
+      </Collapse>
     </View>
   );
 }

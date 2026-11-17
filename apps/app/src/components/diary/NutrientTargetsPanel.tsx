@@ -5,7 +5,7 @@ import { type NutrientCode, type NutrientGroup, type NutrientMap } from '@ration
 import { HighlightRings } from '@/components/charts/HighlightRings';
 import { NutrientBar } from '@/components/charts/NutrientBar';
 import { ProgressRing } from '@/components/charts/ProgressRing';
-import { AppText, Card } from '@/components/ui';
+import { AppText, Card, Collapse } from '@/components/ui';
 import type { ResolvedTargets } from '@/data/targets';
 import { spacing } from '@/theme';
 
@@ -103,7 +103,7 @@ export function NutrientTargetsPanel({
                   </AppText>
                   <AppText muted>{isCollapsed ? '▸' : '▾'}</AppText>
                 </Pressable>
-                {!isCollapsed ? (
+                <Collapse open={!isCollapsed}>
                   <View style={styles.rows}>
                     {group.rows.map((row) => (
                       <NutrientBar
@@ -118,7 +118,7 @@ export function NutrientTargetsPanel({
                       />
                     ))}
                   </View>
-                ) : null}
+                </Collapse>
               </Card>
             );
           })
