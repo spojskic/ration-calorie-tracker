@@ -42,3 +42,7 @@ coverage/
 
 # unsigned iOS build output (scripts/build-ios-ipa.sh)
 /build/
+
+# Impeccable design-detector state (local only)
+.impeccable/
+apps/app/.impeccable/
