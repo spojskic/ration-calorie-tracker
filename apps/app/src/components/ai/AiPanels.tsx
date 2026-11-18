@@ -64,7 +64,11 @@ export function AiWorking({ label, onCancel }: { label: string; onCancel?: () =>
   );
 }
 
-/** Shown when a deep link opens an AI screen while the AI gate is closed. */
+/**
+ * Shown when a deep link opens an AI screen while the AI gate is closed. Same invitation as the coach's gate
+ * (CoachUnavailable): the reason in plain words, the promise that nothing is sent before connecting, and one primary
+ * way to Settings > AI - the destination is named the same way on both screens.
+ */
 export function AiNotAvailable({ reason }: { reason: string | null }) {
   const checking = reason === 'checking';
   return (
@@ -75,11 +79,11 @@ export function AiNotAvailable({ reason }: { reason: string | null }) {
       ) : (
         <AppText muted>
           {reason === 'invalid_key'
-            ? 'Your OpenRouter key was rejected. Reconnect it in Settings.'
-            : 'AI features are optional. Connect your own OpenRouter key in Settings to use them.'}
+            ? 'Reconnect OpenRouter in Settings > AI to use it.'
+            : 'Connect OpenRouter in Settings > AI to use it. It is optional and uses your own key; nothing is sent until you connect.'}
         </AppText>
       )}
-      <Button label="Open AI settings" variant="secondary" onPress={openAiSettings} />
+      <Button label="Open Settings > AI" onPress={openAiSettings} />
     </Card>
   );
 }

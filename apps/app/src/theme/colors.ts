@@ -32,10 +32,14 @@ export interface ThemeColors {
   onPrimary: string;
   /** Second accent (links, info callouts, custom foods). */
   accent: string;
+  /** `accent` as small text (links, inline actions): the same hue, at 4.5:1 on every flat surface. */
+  accentText: string;
   /** Sidebar (wide screens) and bottom tab bar. */
   sidebar: string;
   onSidebar: string;
   onSidebarMuted: string;
+  /** `primary` as small text on the sidebar (the focused tab label): the same hue, at 4.5:1 on that background. */
+  onSidebarPrimary: string;
   energy: string;
   protein: string;
   carbs: string;
@@ -43,12 +47,16 @@ export interface ThemeColors {
   danger: string;
   /** Text and icons on a `danger` fill. */
   onDanger: string;
+  /** `danger` as small text (the over-target percentage): the same hue, at 4.5:1 on every flat surface. */
+  dangerText: string;
   warning: string;
   /** Text and icons on a `warning` fill. */
   onWarning: string;
   success: string;
   /** Text and icons on a `success` fill. */
   onSuccess: string;
+  /** `success` as small text (the within-target percentage): the same hue, at 4.5:1 on every flat surface. */
+  successText: string;
   /** Progress bar tracks. */
   track: string;
   /** The dim layer behind sheets and dialogs. Draw it with {@link withAlpha}, never opaque. */
@@ -78,19 +86,23 @@ export const THEME_COLOR_KEYS = [
   'primary',
   'onPrimary',
   'accent',
+  'accentText',
   'sidebar',
   'onSidebar',
   'onSidebarMuted',
+  'onSidebarPrimary',
   'energy',
   'protein',
   'carbs',
   'fat',
   'danger',
   'onDanger',
+  'dangerText',
   'warning',
   'onWarning',
   'success',
   'onSuccess',
+  'successText',
   'track',
   'scrim',
 ] as const satisfies readonly (keyof ThemeColors)[];
@@ -114,7 +126,7 @@ export const lightColors: ThemeColors = defineColors(
     surfaceAlt: '#EEF0F7',
     border: '#E2E4EC',
     text: '#232A3B',
-    textMuted: '#6B7285',
+    textMuted: '#666D7F', // nudged from #6B7285 to 4.5 : 1 on surfaceAlt (was 4.22)
     primary: '#ED693D', // nudged from palette.orange (#EF7B54)
     accent: palette.deepTeal,
     sidebar: '#262A3B',

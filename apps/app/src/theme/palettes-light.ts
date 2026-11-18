@@ -17,7 +17,7 @@ export const LIGHT_PALETTES: readonly PaletteDef[] = [
         surfaceAlt: '#E5DDB0', // lotusWhite2
         border: '#D5CEA3', // lotusWhite0
         text: '#43436C', // lotusInk2
-        textMuted: '#6D6A5D', // nudged from #716E61 (lotusGray2)
+        textMuted: '#636155', // lotusGray2, nudged twice: from #716E61, then to 4.5 : 1 on surfaceAlt (was 3.95)
         primary: '#4D699B', // lotusBlue4
         accent: '#597B75', // lotusAqua
         sidebar: '#DCD5AC', // lotusWhite1
@@ -47,7 +47,7 @@ export const LIGHT_PALETTES: readonly PaletteDef[] = [
         surfaceAlt: '#E6E9EF', // mantle
         border: '#CCD0DA', // surface0
         text: '#4C4F69',
-        textMuted: '#6A6D82', // nudged from #6C6F85 (subtext0)
+        textMuted: '#65687C', // subtext0, nudged to 4.5 : 1 on surfaceAlt (was 4.19)
         primary: '#1E66F5', // blue
         accent: '#179299', // teal
         sidebar: '#DCE0E8', // crust
@@ -77,12 +77,12 @@ export const LIGHT_PALETTES: readonly PaletteDef[] = [
         surfaceAlt: '#EEE8D5', // base2
         border: '#DDD6C1', // derived (between base2 and base1)
         text: '#073642', // base02
-        textMuted: '#586E75', // base01
+        textMuted: '#566B72', // base01, nudged to 4.5 : 1 on surfaceAlt (was 4.39)
         primary: '#268BD2', // blue
         accent: '#2AA198', // cyan
         sidebar: '#EEE8D5',
         onSidebar: '#073642',
-        onSidebarMuted: '#566B72', // textMuted, darkened to 4.5 : 1 on the sidebar
+        onSidebarMuted: '#566B72', // = textMuted
         energy: '#CB4B16', // orange
         protein: '#859900', // green
         carbs: '#2AA198', // cyan
@@ -137,12 +137,12 @@ export const LIGHT_PALETTES: readonly PaletteDef[] = [
         surfaceAlt: '#EAEEF2',
         border: '#D0D7DE',
         text: '#1F2328',
-        textMuted: '#656D76',
+        textMuted: '#646C75', // nudged to 4.5 : 1 on surfaceAlt (was 4.50, a hair under)
         primary: '#0969DA', // accent fg
         accent: '#8250DF', // done fg
         sidebar: '#EAEEF2',
         onSidebar: '#1F2328',
-        onSidebarMuted: '#646C75', // textMuted, darkened to 4.5 : 1 on the sidebar
+        onSidebarMuted: '#646C75', // = textMuted
         energy: '#BC4C00', // severe fg
         protein: '#1A7F37', // success fg
         carbs: '#1B7C83', // teal
@@ -167,12 +167,12 @@ export const LIGHT_PALETTES: readonly PaletteDef[] = [
         surfaceAlt: '#F2E9E1', // overlay
         border: '#DFDAD9', // highlight med
         text: '#534E73', // nudged from #575279
-        textMuted: '#716D8C', // nudged from #797593 (subtle)
+        textMuted: '#6A6683', // nudged from #797593 (subtle), then to 4.5 : 1 on surfaceAlt (was 4.10)
         primary: '#286983', // pine
         accent: '#907AA9', // iris
         sidebar: '#F2E9E1',
         onSidebar: '#575279',
-        onSidebarMuted: '#6A6683', // textMuted, darkened to 4.5 : 1 on the sidebar
+        onSidebarMuted: '#6A6683', // = textMuted
         energy: '#D7827E', // rose
         protein: '#56949F', // foam
         carbs: '#EA9D34', // gold
@@ -197,12 +197,12 @@ export const LIGHT_PALETTES: readonly PaletteDef[] = [
         surfaceAlt: '#D0D5E3', // bg_dark
         border: '#C4C8DA', // bg_highlight
         text: '#343B58',
-        textMuted: '#5061A0', // nudged from #6172B0 (fg_dark)
+        textMuted: '#495992', // nudged from #6172B0 (fg_dark), then to 4.5 : 1 on surfaceAlt (was 4.02)
         primary: '#1F70E0', // nudged from #2E7DE9 (blue): 3 : 1 on the sidebar, and white labels reach 4.5 : 1
         accent: '#9854F1', // magenta
         sidebar: '#D0D5E3',
         onSidebar: '#343B58',
-        onSidebarMuted: '#495992', // textMuted, darkened to 4.5 : 1 on the sidebar
+        onSidebarMuted: '#495992', // = textMuted
         energy: '#B15C00', // orange
         protein: '#587539', // green
         carbs: '#007197', // cyan

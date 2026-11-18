@@ -18,7 +18,7 @@ function ExternalLink({ label, url }: { label: string; url: string }) {
         Linking.openURL(url).catch(() => {});
       }}
       style={({ pressed }) => [styles.link, { opacity: pressed ? 0.7 : 1 }]}>
-      <AppText variant="body" style={{ color: colors.accent, textDecorationLine: 'underline' }}>{label}</AppText>
+      <AppText variant="body" style={{ color: colors.accentText, textDecorationLine: 'underline' }}>{label}</AppText>
     </Pressable>
   );
 }

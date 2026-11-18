@@ -261,8 +261,10 @@ async function checkDesktopFoods(page: Page, ctx: ScenarioContext): Promise<void
 
 // ------------------------------------------------------------------------------------------ energy summary helpers
 
-/** The button under the energy summary's third circle (Remaining / Over in Target, Deficit / Surplus in Balance). */
-const thirdCircleButton = (page: Page) => page.getByRole('button', { name: 'Switch between Target and Balance', exact: true }).first();
+/** The button under the energy summary's third circle (Remaining / Over in Target, Deficit / Surplus in Balance).
+ *  On the phone diary two of them exist (the pager's Energy page, then the sheet's copy above it in DOM order);
+ *  the sheet's is the interactive one, and on desktop the only one, so `.last()` serves both. */
+const thirdCircleButton = (page: Page) => page.getByRole('button', { name: 'Switch between Target and Balance', exact: true }).last();
 
 /** FAIL unless the label under the third circle reads like the pattern (it re-renders a moment after a tap). */
 async function expectThirdCircle(ctx: ScenarioContext, page: Page, pattern: RegExp): Promise<boolean> {
@@ -825,7 +827,8 @@ export const SCENARIOS: Scenario[] = [
     auth: 'signed-in',
     expect: ['Breakfast', 'Lunch', 'Dinner', 'Snacks'],
     async after(page, ctx) {
-      if (ctx.isPhone) await ctx.step('open the Energy page of the targets', () => clickTab(page, /^Energy/));
+      // Phones: the rings live in the targets sheet behind the compact strip; wide screens show the panel.
+      if (ctx.isPhone) await ctx.step('open the targets sheet', () => clickButton(page, /Targets overview/));
       await expectThirdCircle(ctx, page, TARGET_VIEW);
       await stepThen(ctx, 'tap the label under the third circle', () => thirdCircleButton(page).click({ timeout: 6000 }), async () => {
         await expectThirdCircle(ctx, page, BALANCE_VIEW);
@@ -869,8 +872,15 @@ export const SCENARIOS: Scenario[] = [
         },
         () => ctx.expectMutation('diary_entries', 'delete'),
       );
-      await ctx.step('scroll to the nutrient targets', () => scrollToText(page, 'Nutrient Targets'));
-      await ctx.snapshot('nutrient-targets');
+      // Phones: the nutrient panel moved into the targets sheet (one compact strip above the meals);
+      // wide screens keep the panel beside the entries.
+      if (ctx.isPhone) {
+        await ctx.step('open the nutrient targets in the targets sheet', () => clickButton(page, /Targets overview/));
+        await ctx.snapshot('nutrient-targets');
+      } else {
+        await ctx.step('scroll to the nutrient targets', () => scrollToText(page, 'Nutrient Targets'));
+        await ctx.snapshot('nutrient-targets');
+      }
     },
   },
   {
@@ -1011,6 +1021,16 @@ export const SCENARIOS: Scenario[] = [
         await stepThen(ctx, 'close it again', () => clickButton(page, /activity, .*Collapse/), () => ctx.expectNoText('Daily Activity', { timeout: 1500 }));
       });
     },
+  },
+  {
+    // The water row counts against the configured target (3.7 L) in the user's units: an imperial profile must not read
+    // "ml" here while the water form says fl oz.
+    name: "diary: the water row shows the goal in the user's units",
+    route: '/diary',
+    path: '/diary',
+    auth: 'signed-in',
+    fixtures: 'imperial',
+    expect: ['36.5 / 125.1 fl oz', '+ 8.5 fl oz'],
   },
   {
     name: 'diary: add a saved meal to Lunch',
@@ -1530,6 +1550,16 @@ export const SCENARIOS: Scenario[] = [
     expect: ['Foods', 'Favorites'],
     async after(page, ctx) {
       if (!ctx.isPhone) await checkDesktopFoods(page, ctx);
+      if (ctx.isPhone) {
+        // The five tabs used to scroll sideways and cut "Saved meals" off at the right edge of a 390 px phone.
+        await ctx.check('every library tab fits on a phone (the chip row wraps instead of scrolling)', async () => {
+          const box = await boxOf(page.getByRole('tab', { name: 'Saved meals', exact: true }), 'the "Saved meals" tab');
+          const width = page.viewportSize()?.width ?? 0;
+          if (box.x + box.width > width) {
+            throw new Error(`the "Saved meals" tab ends at ${Math.round(box.x + box.width)}px, past the ${width}px window`);
+          }
+        });
+      }
       const tabs: [string, string][] = [
         ['Favorites', 'Chicken breast, skinless, boneless, raw'],
         ['Recent', 'Oats, rolled, dry'],
@@ -2202,18 +2232,30 @@ export const SCENARIOS: Scenario[] = [
     },
   },
   {
-    name: 'water: quick amounts, custom amount, undo',
+    name: 'water: quick amounts, custom amount, goal progress, remove with undo',
     route: '/water/new',
     path: '/water/new',
     auth: 'signed-in',
-    expect: ["Today's total", 'Custom amount'],
+    // 250 + 330 + 500 mL already logged today, against the 3.7 L water target of the guide lines.
+    expect: ["Today's total", 'Custom amount', '29% of the 3.7 L goal'],
     async after(page, ctx) {
-      await stepThen(ctx, 'tap 500 mL', () => clickButton(page, /500 mL/), () => ctx.expectMutation('water_entries', 'insert', (m) => payloadOf(m).ml === 500));
+      await stepThen(ctx, 'tap 500 mL', () => clickButton(page, /500 mL/), async () => {
+        await ctx.expectMutation('water_entries', 'insert', (m) => payloadOf(m).ml === 500);
+        await ctx.expectText('43% of the 3.7 L goal');
+      });
       await stepThen(ctx, 'add a custom 400 mL', async () => {
         await fill(page, 'Custom amount (mL)', '400');
         await clickButton(page, 'Add custom amount', { exact: true });
       }, () => ctx.expectMutation('water_entries', 'insert', (m) => payloadOf(m).ml === 400));
-      await stepThen(ctx, 'remove the last entry', () => clickButton(page, 'Remove last', { exact: true }), () => ctx.expectMutation('water_entries', 'delete'));
+      // Removing is a correction, not a second "Done": it is a small destructive text action under the primary button
+      // and it can be undone from the toast, like a deleted diary entry.
+      await stepThen(ctx, 'remove the last entry', () => clickButton(page, 'Remove last entry', { exact: true }), async () => {
+        await ctx.expectMutation('water_entries', 'delete');
+        await ctx.expectText(/Removed .+ of water/);
+        await ctx.snapshot('removed');
+        await stepThen(ctx, 'undo the removal', () => clickButton(page, 'Undo', { exact: true }), () =>
+          ctx.expectMutation('water_entries', 'insert', (m) => Number(payloadOf(m).ml) > 0));
+      });
     },
   },
 
@@ -2237,6 +2279,12 @@ export const SCENARIOS: Scenario[] = [
       }, async () => {
         await ctx.expectUrl(/\/recipe\/new/);
         await ctx.expectText('Oats, rolled, dry');
+        // "1/2 cup" (40 g) and "1 cup" (81 g) both strip to "cup": the chips carry their per-unit grams, so the wrong
+        // one cannot be picked and silently double the ingredient.
+        await ctx.check('the two cup portions of oats are told apart on their chips', async () => {
+          await ctx.expectText('cup \u00B7 80 g');
+          await ctx.expectText('cup \u00B7 81 g');
+        });
         await ctx.snapshot('with-ingredient');
         await stepThen(ctx, 'save the recipe', () => clickButton(page, /Save recipe/), async () => {
           await ctx.expectMutation('foods', 'insert', (m) => payloadOf(m).kind === 'recipe' && payloadOf(m).name === 'Zobena kaša s bananom');
@@ -2401,6 +2449,10 @@ export const SCENARIOS: Scenario[] = [
     auth: 'signed-in',
     expect: ['Macro & Energy Targets', 'Weight Goal', 'Energy calculation'],
     async after(page, ctx) {
+      await ctx.check('the target breakdown names the unit on every adjustment', async () => {
+        const signed = await page.getByText(/^[+-]\d[\d,]* kcal$/).count();
+        if (signed < 2) throw new Error(`${signed} signed "kcal" rows in the breakdown`);
+      });
       await ctx.step('scroll to the weight goal', () => scrollToText(page, 'Weight Goal'));
       await ctx.snapshot('weight-goal');
       await stepThen(ctx, 'switch the goal to maintain and save', async () => {

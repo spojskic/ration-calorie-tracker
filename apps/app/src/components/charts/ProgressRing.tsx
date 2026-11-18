@@ -46,7 +46,9 @@ export function ProgressRing({
   const c = 2 * Math.PI * r;
   const stroke = raw > 1 && overColor ? overColor : (color ?? colors.primary);
   const labelSize = Math.max(11, Math.round(size * 0.2));
-  const subSize = Math.max(9, Math.round(size * 0.125));
+  // 11 px is the floor for the sublabel: below that a "kcal"/"All targets" caption stops reading as text (and drops under the
+  // minimum size the accessibility pass checks). The rings render at 52-96 px, so the inner width still fits it.
+  const subSize = Math.max(11, Math.round(size * 0.125));
   const text = accessibilityLabel ?? [label, sublabel].filter(Boolean).join(' ');
 
   return (

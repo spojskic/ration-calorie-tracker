@@ -70,7 +70,7 @@ export function TimeField({
         onPress={() => onChange(formatTimeOfDay(new Date()))}
         hitSlop={8}
         style={styles.now}>
-        <AppText variant="small" style={{ color: colors.accent, fontWeight: '700' }}>
+        <AppText variant="small" style={{ color: colors.accentText, fontWeight: '700' }}>
           Use current time
         </AppText>
       </Pressable>

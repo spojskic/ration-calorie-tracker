@@ -49,13 +49,18 @@ export function macroLine(food: {
   return `${formatKcal(food.kcal100g)} kcal  |  P ${g(food.protein100g)}  |  C ${g(food.carbs100g)}  |  F ${g(food.fat100g)}`;
 }
 
+/** "Tue, Nov 10" for a local ISO date, whatever the day is. */
+export function formatCalendarDate(iso: string): string {
+  return fromISODate(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
 /** "Today", "Yesterday", "Tomorrow" or "Mon, Nov 10" for a local ISO date. */
 export function formatDayLabel(iso: string): string {
   const today = todayISO();
   if (iso === today) return 'Today';
   if (iso === addDays(today, -1)) return 'Yesterday';
   if (iso === addDays(today, 1)) return 'Tomorrow';
-  return fromISODate(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  return formatCalendarDate(iso);
 }
 
 /** Lower-case + accent-insensitive text for client-side filtering (handles the Balkan letters too). */

@@ -265,7 +265,7 @@ export default function SignInScreen() {
             </>
           )}
           {error ? (
-            <AppText variant="small" style={{ color: colors.danger }}>
+            <AppText variant="small" style={{ color: colors.dangerText }}>
               {error}
             </AppText>
           ) : null}
@@ -290,7 +290,7 @@ export default function SignInScreen() {
             style={({ pressed }) => [styles.switchLink, { opacity: busy ? 0.5 : pressed ? 0.7 : 1 }]}>
             <AppText
               variant="small"
-              style={{ color: colors.accent, fontWeight: '700', textDecorationLine: 'underline' }}>
+              style={{ color: colors.accentText, fontWeight: '700', textDecorationLine: 'underline' }}>
               {signingUp ? 'Sign in' : forgotting ? 'Back to sign in' : 'Create account'}
             </AppText>
           </Pressable>
@@ -304,7 +304,7 @@ export default function SignInScreen() {
               style={({ pressed }) => [styles.switchLink, { opacity: busy ? 0.5 : pressed ? 0.7 : 1 }]}>
               <AppText
                 variant="small"
-                style={{ color: colors.accent, fontWeight: '700', textDecorationLine: 'underline' }}>
+                style={{ color: colors.accentText, fontWeight: '700', textDecorationLine: 'underline' }}>
                 Forgot password?
               </AppText>
             </Pressable>

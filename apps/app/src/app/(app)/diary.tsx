@@ -23,7 +23,7 @@ import { MealGroupSection } from '@/components/diary/MealGroupSection';
 import { go } from '@/components/diary/nav';
 import { NutrientTargetsPanel } from '@/components/diary/NutrientTargetsPanel';
 import { NutritionSummarySheet } from '@/components/diary/NutritionSummarySheet';
-import { ActionMenu, type MenuAction } from '@/components/diary/Sheet';
+import { ActionMenu, Sheet, type MenuAction } from '@/components/diary/Sheet';
 import { energySummaryProps } from '@/components/diary/energy-view';
 import { buildHighlights, buildMacroRows, consumedSplit, targetSplit } from '@/components/diary/targets-view';
 import { TargetsHeader, TargetsPager } from '@/components/diary/TargetsPager';
@@ -92,6 +92,8 @@ export default function DiaryScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
+  // Phone targets overview: the compact strip opens the full energy + nutrient panels in a sheet.
+  const [targetsSheet, setTargetsSheet] = useState(false);
   // undefined = copy sheet closed, null = copy a whole day, object = copy one meal group.
   const [copyGroup, setCopyGroup] = useState<{ id: string; name: string } | null | undefined>(undefined);
   const [refreshing, setRefreshing] = useState(false);
@@ -381,19 +383,15 @@ export default function DiaryScreen() {
     </View>
   );
 
-  // Phones: the targets scroll away with the page; only the date bar stays on top.
+  // Phones: the swipeable targets pager (macro bars, energy rings, nutrient rings) stays above the meals -
+  // it is a daily gesture - but the header row above it now opens the sheet with the full energy and
+  // nutrient panels, and the duplicates that used to render below the entries are gone; wide screens keep
+  // their dedicated panels.
   const phoneTargets = (
     <View style={[styles.pad, styles.phoneTargets]}>
-      <TargetsHeader onPress={() => go('/settings/targets')} />
+      <TargetsHeader onPress={() => setTargetsSheet(true)} />
       <TargetsPager rows={rows} energy={energyProps} highlights={highlights} />
     </View>
-  );
-
-  const energyCard = (
-    <Card>
-      <AppText variant="heading">Energy Summary</AppText>
-      <EnergySummary {...energyProps} />
-    </Card>
   );
 
   // Wide windows (beside the sidebar): the page header carries the date controls, the body is the panels of DiaryDesktop.tsx.
@@ -445,16 +443,6 @@ export default function DiaryScreen() {
         {onboardingPrompt ? <View style={styles.pad}>{onboardingPrompt}</View> : null}
         {phoneTargets}
         {diaryList}
-        <View style={styles.pad}>{energyCard}</View>
-        <View style={styles.pad}>
-          <NutrientTargetsPanel
-            totals={day.totals}
-            hasEntries={day.hasEntries}
-            incompleteNutrients={day.incompleteNutrients}
-            targets={targets}
-            netCarbs={netCarbs}
-          />
-        </View>
       </View>
     </ScrollView>
   );
@@ -476,6 +464,35 @@ export default function DiaryScreen() {
         actions={menuActions}
         onClose={() => setMenuVisible(false)}
       />
+      {/* Phone targets sheet: the energy rings and the nutrient panel that used to sit under the diary
+          entries, one tap from the compact strip. */}
+      <Sheet
+        visible={targetsSheet}
+        title="Targets"
+        subtitle={formatDayLabel(date)}
+        onClose={() => setTargetsSheet(false)}>
+        <View style={styles.sheetBody}>
+          <Card>
+            <AppText variant="heading">Energy Summary</AppText>
+            <EnergySummary {...energyProps} />
+          </Card>
+          <NutrientTargetsPanel
+            totals={day.totals}
+            hasEntries={day.hasEntries}
+            incompleteNutrients={day.incompleteNutrients}
+            targets={targets}
+            netCarbs={netCarbs}
+          />
+          <Button
+            label="Edit targets"
+            variant="secondary"
+            onPress={() => {
+              setTargetsSheet(false);
+              go('/settings/targets');
+            }}
+          />
+        </View>
+      </Sheet>
       <CopyDiarySheet
         visible={copyGroup !== undefined}
         targetDate={date}
@@ -535,6 +552,7 @@ const styles = StyleSheet.create({
   pad: { paddingHorizontal: spacing.lg },
   body: { gap: spacing.md, paddingTop: spacing.sm },
   phoneTargets: { gap: spacing.xs },
+  sheetBody: { gap: spacing.lg },
   centered: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg },
   hint: { textAlign: 'center', paddingVertical: spacing.md },
 });

@@ -145,7 +145,9 @@ function BottomButton({
   ...rest
 }: TabTriggerSlotProps & { item: NavItem; badge?: string | undefined; badgeLabel?: string | undefined }) {
   const { colors, radius } = useTheme();
-  const color = isFocused ? colors.primary : colors.onSidebarMuted;
+  // Icon and label share one colour, and the label is 11 px text: use the sidebar-tuned primary, which clears 4.5 : 1 on the
+  // bar (the icon reads fine a shade darker than the graphic `primary`).
+  const color = isFocused ? colors.onSidebarPrimary : colors.onSidebarMuted;
   return (
     <Pressable
       {...(rest as PressableProps)}

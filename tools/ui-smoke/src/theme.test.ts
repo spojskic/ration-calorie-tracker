@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 
 import { paletteCardWidth, paletteColumns, PALETTE_CARD_MIN_WIDTH, PALETTE_GRID_GAP } from '../../../apps/app/src/components/settings/palette-grid';
 import { darkColors, lightColors, THEME_COLOR_KEYS, withAlpha, type ThemeColors } from '../../../apps/app/src/theme/colors';
-import { bestInk, contrastRatio, hexToRgb, relativeLuminance } from '../../../apps/app/src/theme/contrast';
+import { bestInk, contrastRatio, hexToRgb, relativeLuminance, textSafe } from '../../../apps/app/src/theme/contrast';
 import { defineColors } from '../../../apps/app/src/theme/define-colors';
 import {
   DARK_PALETTES,
@@ -50,13 +50,28 @@ import {
 const here = dirname(fileURLToPath(import.meta.url));
 const HEX6 = /^#[0-9a-fA-F]{6}$/;
 
+/** Hue in degrees (0-360) of a #RRGGBB colour: the part of the colour a derived text token must not change. */
+function hueOf(hex: string): number {
+  const [r255, g255, b255] = hexToRgb(hex);
+  const r = r255 / 255;
+  const g = g255 / 255;
+  const b = b255 / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const chroma = max - min;
+  if (chroma === 0) return 0;
+  const h = max === r ? (g - b) / chroma + (g < b ? 6 : 0) : max === g ? (b - r) / chroma + 2 : (r - g) / chroma + 4;
+  return h * 60;
+}
+
 /** [foreground token, background token, minimum contrast ratio]. Text 4.5, large text and UI parts 3 (WCAG 2.2 AA). */
 const FLOORS: readonly (readonly [keyof ThemeColors, keyof ThemeColors, number])[] = [
   ['text', 'background', 7],
   ['text', 'surface', 4.5],
   ['textMuted', 'background', 4.5],
   ['textMuted', 'surface', 4.5],
-  ['textMuted', 'surfaceAlt', 3.5],
+  // muted text also sits on the inset colour (meal subtitles, field hints): it is 13 px, so the body floor applies there too
+  ['textMuted', 'surfaceAlt', 4.5],
   ['onPrimary', 'primary', 4.5],
   ['onDanger', 'danger', 4.5],
   ['onWarning', 'warning', 4.5],
@@ -74,6 +89,19 @@ const FLOORS: readonly (readonly [keyof ThemeColors, keyof ThemeColors, number])
   ['success', 'surface', 3],
   ['warning', 'surface', 3],
   ['primary', 'sidebar', 3],
+  // The text-grade variants of the status/accent colours are drawn as 11-16 px labels (percentages, links, tab labels, inline
+  // actions), so they carry the body-text floor on every flat surface instead of the 3 : 1 of the bars and rings they mirror.
+  ['successText', 'background', 4.5],
+  ['successText', 'surface', 4.5],
+  ['successText', 'surfaceAlt', 4.5],
+  ['dangerText', 'background', 4.5],
+  ['dangerText', 'surface', 4.5],
+  ['dangerText', 'surfaceAlt', 4.5],
+  ['accentText', 'background', 4.5],
+  ['accentText', 'surface', 4.5],
+  ['accentText', 'surfaceAlt', 4.5],
+  // the focused tab label is `onSidebarPrimary` on the sidebar, the one background that can be dark in a light palette (Ration Day)
+  ['onSidebarPrimary', 'sidebar', 4.5],
 ];
 
 describe('palette registry', () => {
@@ -188,6 +216,23 @@ describe('contrast floors (WCAG)', () => {
     expect(failures).toEqual([]);
   });
 
+  it('the text-grade status/accent colours keep the hue of the bar and ring token they mirror', () => {
+    // green still reads "under target", red "over target", blue the selected tab: only the lightness moves. 4 degrees leaves
+    // room for the 8-bit rounding of the derived hex; the derivation itself only touches lightness.
+    const pairs = [
+      ['successText', 'success'],
+      ['dangerText', 'danger'],
+      ['accentText', 'accent'],
+      ['onSidebarPrimary', 'primary'],
+    ] as const;
+    for (const p of PALETTES) {
+      for (const [text, graphic] of pairs) {
+        const gap = Math.abs(hueOf(p.colors[text]) - hueOf(p.colors[graphic]));
+        expect(Math.min(gap, 360 - gap), `${p.id}: ${text} vs ${graphic}`).toBeLessThan(4);
+      }
+    }
+  });
+
   it('the page, card and input colours of a palette are three different steps', () => {
     for (const p of PALETTES) {
       const { background, surface, surfaceAlt, border } = p.colors;
@@ -227,7 +272,7 @@ describe('contrast helpers', () => {
 
   it('defineColors derives the on* colours from the two inks and keeps the dark ink as the scrim', () => {
     const base = { ...lightColors } as Record<string, string>;
-    for (const key of ['onPrimary', 'onDanger', 'onWarning', 'onSuccess', 'scrim']) delete base[key];
+    for (const key of ['onPrimary', 'onDanger', 'onWarning', 'onSuccess', 'scrim', 'successText', 'dangerText', 'accentText', 'onSidebarPrimary']) delete base[key];
     const built = defineColors(base as never, { dark: '#101018', light: '#F8F8F0' });
     expect(built.scrim).toBe('#101018');
     expect(built.onPrimary).toBe(bestInk(built.primary, ['#101018', '#F8F8F0']));
@@ -235,6 +280,21 @@ describe('contrast helpers', () => {
     expect(built.onWarning).toBe(bestInk(built.warning, ['#101018', '#F8F8F0']));
     expect(built.onSuccess).toBe(bestInk(built.success, ['#101018', '#F8F8F0']));
     expect(built.background).toBe(lightColors.background);
+  });
+
+  it('defineColors derives the text-grade status/accent colours, and leaves them alone when they already pass', () => {
+    const surfaces = [lightColors.background, lightColors.surface, lightColors.surfaceAlt];
+    const base = { ...lightColors } as Record<string, string>;
+    for (const key of ['onPrimary', 'onDanger', 'onWarning', 'onSuccess', 'scrim', 'successText', 'dangerText', 'accentText', 'onSidebarPrimary']) delete base[key];
+    const built = defineColors(base as never, { dark: '#101018', light: '#F8F8F0' });
+    expect(built.successText).toBe(textSafe(built.success, surfaces));
+    expect(built.dangerText).toBe(textSafe(built.danger, surfaces));
+    expect(built.accentText).toBe(textSafe(built.accent, surfaces));
+    expect(built.onSidebarPrimary).toBe(textSafe(built.primary, [built.sidebar]));
+    // a colour that already reaches the floor comes back untouched (a palette only changes where it failed)
+    expect(textSafe('#1F2328', surfaces)).toBe('#1F2328');
+    // and on a dark page the same colour is lightened instead, to the same floor
+    expect(contrastRatio(textSafe('#1F2328', ['#101018']), '#101018')).toBeGreaterThanOrEqual(4.5);
   });
 
   it('withAlpha appends a 2-digit alpha to a 6-digit colour', () => {

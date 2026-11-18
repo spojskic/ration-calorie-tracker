@@ -245,7 +245,7 @@ export default function NewExerciseScreen() {
               onPress={() => setKcalOverride(null)}
               hitSlop={8}
               style={{ minHeight: 36, justifyContent: 'center' }}>
-              <AppText variant="small" style={{ color: colors.accent, fontWeight: '700' }}>
+              <AppText variant="small" style={{ color: colors.accentText, fontWeight: '700' }}>
                 Reset to estimate ({computed} kcal)
               </AppText>
             </Pressable>

@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Chip } from '@/components/settings/rows';
 import { spacing } from '@/theme';
@@ -8,7 +8,11 @@ export interface ChipItem<K extends string> {
   label: string;
 }
 
-/** A single row of filter chips that scrolls sideways when it does not fit (phones). */
+/**
+ * A row of filter chips that wraps onto a second line when it does not fit. It used to scroll sideways, which hid the
+ * last options completely on a 390 px phone ("Manual", the last source; the last kind) - a filter nobody scrolls to
+ * find might as well not exist. The rows are short (four or five chips), so wrapping stays at two lines at most.
+ */
 export function ChipRow<K extends string>({
   items,
   value,
@@ -22,16 +26,20 @@ export function ChipRow<K extends string>({
   label: string;
 }) {
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-        {items.map((item) => (
-          <Chip key={item.key} label={item.label} selected={item.key === value} onPress={() => onChange(item.key)} />
-        ))}
-      </ScrollView>
+    <View style={styles.row} accessibilityRole="radiogroup" accessibilityLabel={label}>
+      {items.map((item) => (
+        <Chip key={item.key} label={item.label} selected={item.key === value} onPress={() => onChange(item.key)} />
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.xs },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+  },
 });

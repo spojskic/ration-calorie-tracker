@@ -3,12 +3,14 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   View,
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   type ScrollViewInstance,
 } from 'react-native';
+import { SymbolView } from 'expo-symbols';
 
 import { EnergySummary, type EnergySummaryProps } from '@/components/charts/EnergySummary';
 import { HighlightRings, type HighlightRingItem } from '@/components/charts/HighlightRings';
@@ -90,8 +92,9 @@ export function Pager({ pages }: { pages: PagerPage[] }) {
   );
 }
 
+// The percentage is text, not a bar: use the text-grade tones (4.5 : 1 on the card), while the fills keep the graphic ones.
 const toneColor = (tone: PercentTone, colors: ThemeColors): string =>
-  tone === 'success' ? colors.success : tone === 'danger' ? colors.danger : colors.textMuted;
+  tone === 'success' ? colors.successText : tone === 'danger' ? colors.dangerText : colors.textMuted;
 
 /**
  * One compact macro row: "Energy 2,376 / 2,195 kcal" on the left, the percentage on the right (green once a goal is
@@ -165,27 +168,35 @@ export function MacroBars({ rows }: { rows: MacroRow[] }) {
   );
 }
 
-/** "TARGETS >" (opens the target settings) and "CONSUMED" (what the numbers below are) above the macro rows. */
+/**
+ * "TARGETS ›" (opens the targets sheet with the full energy and nutrient panels) and "CONSUMED" (what the
+ * numbers below are) above the pager. The whole row is the tap target for the sheet: the pager below keeps
+ * the swipe gesture, so tap = details, swipe = pages.
+ */
 export function TargetsHeader({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.header}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Targets, open target settings"
-        hitSlop={8}
-        onPress={onPress}
-        style={styles.headerLink}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Targets overview, open energy and nutrient details"
+      hitSlop={8}
+      onPress={onPress}
+      style={({ pressed }) => [styles.header, { opacity: pressed ? 0.7 : 1 }]}>
+      <View style={styles.headerLink}>
         <AppText variant="label" muted>
           Targets
         </AppText>
-        <AppText variant="label" muted>
-          {'\u203A'}
-        </AppText>
-      </Pressable>
+        <SymbolView
+          name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+          size={16}
+          tintColor={colors.textMuted}
+          fallback={<Text style={[styles.headerGlyph, { color: colors.textMuted }]}>{'\u203A'}</Text>}
+        />
+      </View>
       <AppText variant="label" muted>
         Consumed
       </AppText>
-    </View>
+    </Pressable>
   );
 }
 
@@ -237,6 +248,7 @@ const styles = StyleSheet.create({
   notch: { position: 'absolute', top: 0, bottom: 0, width: 2, marginLeft: -1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 28 },
   headerLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  headerGlyph: { fontSize: 16, lineHeight: 18 },
   highlights: { gap: spacing.sm },
   dots: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
   dot: { height: PAGER_DOT_SIZE },

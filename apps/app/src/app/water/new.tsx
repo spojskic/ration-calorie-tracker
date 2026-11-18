@@ -1,7 +1,7 @@
 import { flOzToMl, mlToFlOz, parseNumber, type UnitSystem } from '@ration/core';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import {
   DateBanner,
@@ -19,10 +19,14 @@ import {
   useTargetDate,
   type ChipOption,
 } from '@/components/activity';
+import { ToastHost } from '@/components/diary/ToastHost';
+import { DEFAULT_WATER_TARGET_ML, WaterProgressTrack } from '@/components/diary/WaterRow';
 import { AppText, Button, Card } from '@/components/ui';
 import { useWaterMl } from '@/data/activity';
 import { useAddWater, useUndoLastWater } from '@/data/activity-write';
 import { useUnitSystem } from '@/data/profile';
+import { useTargets } from '@/data/targets';
+import { showDiaryToast } from '@/state/diary-toast';
 import { todayISO } from '@/state/selected-date';
 import { spacing, useTheme } from '@/theme';
 
@@ -54,6 +58,8 @@ export default function NewWaterScreen() {
   const total = useWaterMl(date);
   const add = useAddWater();
   const undo = useUndoLastWater();
+  // The same goal the diary's water row counts against (the water target, grams read as millilitres like water).
+  const target = Math.round(useTargets().data?.nutrients.WATER_G?.min ?? DEFAULT_WATER_TARGET_ML);
 
   const [customText, setCustomText] = useState('');
   const [customError, setCustomError] = useState<string | null>(null);
@@ -100,10 +106,15 @@ export default function NewWaterScreen() {
       const removed = await undo.mutateAsync({ entryDate: date });
       if (removed === null) {
         setFeedback({ tone: 'neutral', text: 'Nothing to remove.' });
-      } else {
-        hapticLight();
-        setFeedback({ tone: 'neutral', text: `Removed ${formatVolume(removed, system)}` });
+        return;
       }
+      hapticLight();
+      setFeedback(null);
+      // Undo re-adds what was just removed: water is only a daily total, so a new entry restores it exactly.
+      showDiaryToast({
+        message: `Removed ${formatVolume(removed, system)} of water`,
+        action: { label: 'Undo', onPress: () => add.mutate({ entryDate: date, ml: removed }) },
+      });
     } catch (e) {
       hapticError();
       setFeedback({ tone: 'error', text: errorMessage(e, 'Could not remove the last entry.') });
@@ -113,9 +124,11 @@ export default function NewWaterScreen() {
   const feedbackColor =
     feedback?.tone === 'error' ? colors.danger : feedback?.tone === 'success' ? colors.success : colors.textMuted;
   const canRemove = !!total.data && total.data > 0 && !undo.isPending;
+  const value = total.data ?? 0;
+  const fraction = target > 0 ? value / target : 0;
 
   return (
-    <>
+    <View style={styles.screen}>
       <Stack.Screen options={{ headerShown: true, title: 'Add water' }} />
       <FormScreen>
         <DateBanner date={date} />
@@ -129,9 +142,20 @@ export default function NewWaterScreen() {
           ) : total.isError ? (
             <AppText variant="small" style={{ color: colors.danger }}>Could not load the total. Adding still works.</AppText>
           ) : (
-            <AppText variant="title" accessibilityLiveRegion="polite">
-              {formatVolume(total.data ?? 0, system)}
-            </AppText>
+            <View
+              accessible
+              accessibilityRole="progressbar"
+              accessibilityLabel={`Water ${formatVolume(value, system)} of the ${formatVolume(target, system)} goal`}
+              accessibilityValue={{ min: 0, max: 100, now: Math.min(100, Math.round(fraction * 100)) }}
+              style={styles.progress}>
+              <AppText variant="title" accessibilityLiveRegion="polite">
+                {formatVolume(value, system)}
+              </AppText>
+              <AppText variant="small" muted>
+                {Math.round(fraction * 100)}% of the {formatVolume(target, system)} goal
+              </AppText>
+              <WaterProgressTrack fraction={fraction} />
+            </View>
           )}
           <View style={styles.feedbackRow}>
             {feedback ? (
@@ -171,16 +195,31 @@ export default function NewWaterScreen() {
         </Card>
 
         <View style={styles.actions}>
-          <Button label="Remove last" variant="secondary" onPress={() => void removeLast()} loading={undo.isPending} disabled={!canRemove} />
           <Button label="Done" onPress={closeScreen} />
+          {/* A small text action, not a second button: removing water is a correction, not a step of this form. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Remove last entry"
+            accessibilityState={{ disabled: !canRemove, busy: undo.isPending }}
+            disabled={!canRemove}
+            onPress={() => void removeLast()}
+            style={({ pressed }) => [styles.removeLast, pressed && canRemove ? { opacity: 0.7 } : null]}>
+            <AppText style={{ color: canRemove ? colors.danger : colors.textMuted, fontWeight: '700' }}>
+              {undo.isPending ? 'Removing...' : 'Remove last entry'}
+            </AppText>
+          </Pressable>
         </View>
       </FormScreen>
-    </>
+      <ToastHost />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
   loader: { alignSelf: 'flex-start', marginVertical: spacing.sm },
+  progress: { gap: spacing.xs + 2 },
   feedbackRow: { minHeight: 24, justifyContent: 'center' },
   actions: { gap: spacing.sm },
+  removeLast: { alignItems: 'center', justifyContent: 'center', minHeight: 44 },
 });

@@ -131,6 +131,13 @@ export function Button({
   const bg =
     variant === 'primary' ? colors.primary : variant === 'secondary' ? colors.surfaceAlt : 'transparent';
   const fg = variant === 'primary' ? colors.onPrimary : colors.text;
+  // Disabled is its own look, not a faded enabled button: a neutral surface with muted-but-legible text reads as
+  // "not yet" (a half-transparent primary reads as broken). The hairline border keeps the shape of the control; a
+  // ghost button stays flat, only its label goes quiet.
+  const isOff = Boolean(disabled);
+  const offBg = variant === 'ghost' ? 'transparent' : colors.surfaceAlt;
+  const offBorder = variant === 'ghost' ? 0 : StyleSheet.hairlineWidth;
+  const offInk = colors.textMuted;
 
   // The scale is animated (the UI "hears" the tap); the opacity dip is instant, like every other tappable.
   const [scale] = useState(() => new Animated.Value(1));
@@ -170,16 +177,19 @@ export function Button({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled: disabled || loading, busy: Boolean(loading) }}
       onPress={onPress}
       onPressIn={pressIn}
       onPressOut={pressOut}
       disabled={disabled || loading}
-      style={({ pressed }) => [styles.button, disabled ? { opacity: 0.5 } : pressedDip(pressed)]}>
+      style={({ pressed }) => [styles.button, disabled ? null : pressedDip(pressed)]}>
       <Animated.View
         style={[
           styles.buttonSurface,
           {
-            backgroundColor: bg,
+            backgroundColor: isOff ? offBg : bg,
+            borderWidth: isOff ? offBorder : 0,
+            borderColor: colors.border,
             // Half of minHeight: a pill for one line, and a rounded rectangle (not an oval) when a long label wraps onto two.
             borderRadius: shape.circle(BUTTON_MIN_HEIGHT),
             transform: [{ scale }],
@@ -188,12 +198,12 @@ export function Button({
         <Animated.View
           pointerEvents="none"
           style={[styles.buttonSpinnerSlot, { opacity: fade, display: loading ? 'flex' : 'none' }]}>
-          <ActivityIndicator color={fg} />
+          <ActivityIndicator color={isOff ? offInk : fg} />
         </Animated.View>
         <Animated.Text
           style={[
             styles.buttonLabel,
-            { color: fg, opacity: fade.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) },
+            { color: isOff ? offInk : fg, opacity: fade.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) },
           ]}>
           {label}
         </Animated.Text>

@@ -38,7 +38,7 @@ export function ActivityPicker({
           onPress={() => onChange(null)}
           hitSlop={8}
           style={styles.change}>
-          <AppText variant="small" style={{ color: colors.accent, fontWeight: '700' }}>Change</AppText>
+          <AppText variant="small" style={{ color: colors.accentText, fontWeight: '700' }}>Change</AppText>
         </Pressable>
       </Card>
     );

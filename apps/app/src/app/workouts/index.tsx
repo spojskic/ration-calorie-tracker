@@ -8,12 +8,32 @@ import { KIND_LABELS, availableKinds, filterByKind, type WorkoutKind } from '@/c
 import { sourceFilters, type SourceFilter } from '@/components/workouts/format';
 import { WorkoutListRow } from '@/components/workouts/WorkoutListRow';
 import { workoutHref } from '@/components/workouts/links';
+import { useDesktopShell } from '@/components/desktop/shell-context';
+import { IconButton } from '@/components/diary/IconButton';
+import { ToolbarButton } from '@/components/panel';
 import { AppRefreshControl, AppText, Button } from '@/components/ui';
 import { useWorkouts, type WorkoutRow } from '@/data/workouts';
 import { todayLocal } from '@/health/dates';
 import { MAX_CONTENT_WIDTH, spacing, useTheme } from '@/theme';
 
 const SETTINGS_INTEGRATIONS = '/settings/integrations' as unknown as Href;
+const LOG_WORKOUT = '/exercise/new' as unknown as Href;
+const LOG_SYMBOL = { ios: 'plus', android: 'add', web: 'add' } as const;
+
+/**
+ * "Log workout" in the page header, on every state of the list: the empty state explains it in full, but once there
+ * are workouts the button there is gone and the screen would dead-end. The desktop shell's slim header has room for a
+ * named action (ToolbarButton, the same one the dashboard's page header uses); a phone header only for a round +.
+ */
+function LogWorkoutAction() {
+  const desktop = useDesktopShell();
+  const open = () => router.push(LOG_WORKOUT);
+  return desktop ? (
+    <ToolbarButton label="Log workout" symbol={LOG_SYMBOL} onPress={open} />
+  ) : (
+    <IconButton glyph="+" label="Log workout" filled onPress={open} size={40} />
+  );
+}
 
 /** Workouts list: every exercise entry (manual and from a device), newest first, grouped by week and month. */
 export default function WorkoutsScreen() {
@@ -88,7 +108,7 @@ export default function WorkoutsScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <Stack.Screen options={{ headerShown: true, title: 'Workouts' }} />
+      <Stack.Screen options={{ headerShown: true, title: 'Workouts', headerRight: () => <LogWorkoutAction /> }} />
       <FlatList
         data={items}
         keyExtractor={(item) => item.key}

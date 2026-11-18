@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -159,11 +158,7 @@ export default function FoodsScreen() {
             </View>
           </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tabs}
-            accessibilityRole="tablist">
+          <View style={styles.tabs} accessibilityRole="tablist">
             {TABS.map((t) => {
               const selected = t.value === tab;
               return (
@@ -184,7 +179,7 @@ export default function FoodsScreen() {
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
 
           {tab === 'meals' && items.length > 0 ? (
             <Button label="New saved meal" variant="secondary" onPress={() => open('/saved-meal/new')} />
@@ -321,7 +316,8 @@ const styles = StyleSheet.create({
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   action: { flex: 1, minWidth: 140 },
-  tabs: { gap: spacing.sm, paddingVertical: spacing.xs },
+  // Two rows of chips on a phone instead of a sideways scroll that cut "Saved meals" off at the edge.
+  tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingVertical: spacing.xs },
   chip: {
     minHeight: 38,
     paddingHorizontal: spacing.lg,
