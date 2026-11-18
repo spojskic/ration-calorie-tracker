@@ -46,3 +46,6 @@ coverage/
 # Impeccable design-detector state (local only)
 .impeccable/
 apps/app/.impeccable/
+
+# Rendered brag videos and their Hyperframes project (local output)
+brag-output/
